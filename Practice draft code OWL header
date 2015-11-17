@@ -1,7 +1,7 @@
 <?php
 // This is a example code of xml reader of the OWL header.
-$xml = new XMLReader ();
-$xml->open ( 'http://purl.obolibrary.org/obo/ro.owl' );
+$owl = new XMLReader ();
+$owl->open ( 'http://purl.obolibrary.org/obo/ro.owl' );
 print 'got past the purl owl library';
 
 while ( $xml->read () ) {
