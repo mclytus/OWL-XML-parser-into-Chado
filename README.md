@@ -1,2 +1,2 @@
-# OWL-XML-parser-into-Chado
+# OWL2chado.php
 Practice
