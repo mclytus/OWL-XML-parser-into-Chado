@@ -15,21 +15,21 @@ $sectionheader ["children"] = array();
 	$sectionheader ["children"][]['value'] = 
 	
 // load the XML file
-$owl = new XMLReader();
+$xml = new XMLReader();
 
 // We are going to go through the owl header section to get through the tags(nodes) which are same as element in the XML reader.
-$owl->open($sectionheader);
+$xml->open($sectionheader);
 $total_nodes =0;
 while ($sectionheader->read()){  
 	$total_nodes++;
 }
-$owl->close();
+$xml->close();
 
 // now parse the input data
 
 $nodes_read = 0
 $attributes =array();
-$owl->open($sectionheader);
+$xml->open($sectionheader);
 while (($sectionheader->read()){
 	$nodes_read++;
 	if ($sectionheader->nodeType == XMLReader::ELEMENT) {
