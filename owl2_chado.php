@@ -12,7 +12,7 @@
 //   'rdf:about' => 'http://purl.obolibrary.org/obo.ro.owl',
 //   'xyz:blah' => 'uinfo'
 // );
-// $sectionheader ["attribute"] = array();
+// $sectionheader ["attributes"] = array();
 // $sectionheader ["attributes"]['rdf:about'] = 'http://purl.obolibrary.org/obo.ro.owl';
 // $sectionheader ["attributes"]['xyz:blah'] = 'uinfo';
 // $sectionheader ["children"] = array();
@@ -36,8 +36,10 @@ while ($owl->read()){
 	  $section['name'] = $owl->name;
 	  
 	  // First, get the attributes.
+	  $section = array();
+	  $section['attributes'] = $owl->get attributes;
 	  // Second, get the value.
-	  // Thrid, get the children.
+	  // Third, get the children.
 	  getSectionChildren($owl, $section);
 	  
 	  // Deal with each section of OWL.
