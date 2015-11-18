@@ -41,17 +41,28 @@ while ($owl->read()){
 /**
  * 
  */
-
 function getSectionAttributes($owl, &$section) {
 	while ($owl->read()){
 		if ($owl->nodeType == XMLReader::ELEMENT) {
 			
 		}
-		if ($owl->Attributes == $section['Attributes'] && $owl->nodeType == XMLReader::END_ELEMENT) {
+		if ($owl->name == $section['name'] && $owl->nodeType == XMLReader::END_ELEMENT) {
 		
 		}
 	  
 	  // Second, get the value.
+/**
+ * 
+ */
+ 
+function getsectionValue($owl,&$section) {
+	while ($owl->read()){
+		if ($owl->nodeType == XMLReader::ELEMENT) {
+			
+		}
+		if ($owl->name == $section['name'] && $owl->nodeType == XMLReader::END_ELEMENT) {
+		
+		}
 	  
 	  // Third, get the children.
 	  getSectionChildren($owl, $section);
@@ -86,7 +97,14 @@ function getSectionChildren($owl, &$section) {
  * 
  */
 function handleAnnotationProperty(&$section) {
+	while ($owl->read()){
+		if ($owl->nodeType == XMLReader::ELEMENT) {
+		}
+		if ($owl->name == $section['Attribute'])
 	
+	}
+	'IAO' => "XXXXXXX";
+	''
 }
 // now parse the input data
 
