@@ -31,14 +31,28 @@ $owl = new XMLReader();
 $owl->open('ro.owl');
 while ($owl->read()){  
 	if ($owl->nodeType == XMLReader::ELEMENT) {
-      // Build the section array.
+	
+	  // Build the section array.
 	  $section = array();
 	  $section['name'] = $owl->name;
 	  
 	  // First, get the attributes.
-	  $section = array();
-	  $section['attributes'] = $owl->get attributes;
+	  getSectionAttributes ($owl, $section);
+/**
+ * 
+ */
+
+function getSectionAttributes($owl, &$section) {
+	while ($owl->read()){
+		if ($owl->nodeType == XMLReader::ELEMENT) {
+			
+		}
+		if ($owl->Attributes == $section['Attributes'] && $owl->nodeType == XMLReader::END_ELEMENT) {
+		
+		}
+	  
 	  // Second, get the value.
+	  
 	  // Third, get the children.
 	  getSectionChildren($owl, $section);
 	  
