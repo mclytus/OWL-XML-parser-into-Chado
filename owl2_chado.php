@@ -26,13 +26,11 @@
   
 // Load the XML file.
 $owl = new XMLReader();
-
 print $owl->read();
 // print $owl->moveToNextAttribute();
 // print $owl->read();
 
-
-// Open the OWL file for parsing.
+// Open or load the OWL file for parsing.
 $owl->open('ro.owl');
 while ($owl->read()){  
 	if ($owl->nodeType == XMLReader::ELEMENT) {
@@ -41,38 +39,55 @@ while ($owl->read()){
 	  $section = array();
 	  $section['name'] = $owl->name;
 	  
+	  
 	  // First, get the attributes.
-	  $oxl->getSectionAttributes ($owl, $section);
+	  $section = array();
+	  $section['attribute'] = $owl->getAttribute;
 /**
  * 
  */
-function getSectionAttributes($owl, &$section) {
+function getSectionAttributes($owl, & $section) {
 	while ($owl->read()){
 		if ($owl->nodeType == XMLReader::ELEMENT) {
 			
 		}
-		if ($owl->name == $section['name'] && $owl->nodeType == XMLReader::END_ELEMENT) {
-		
+		if ($owl->getAttribute == $section['attribute'] && $owl->nodeType == XMLReader::END_ELEMENT) {
+		next('Attribute');
+		return;
 		}
 	  
 	  // Second, get the value.
-	  $owl->getValue
+	  $section = array();
+	  $section['value'] = $owl->Value;
+	  
 /**
  * 
  */
- 
-function getsectionValue($owl,&$section) {
+function getsectionValue($owl, &$section) {
 	while ($owl->read()){
 		if ($owl->nodeType == XMLReader::ELEMENT) {
 			
 		}
-		if ($owl->name == $section['name'] && $owl->nodeType == XMLReader::END_ELEMENT) {
+		if ($owl->name == $section['value'] && $owl->nodeType == XMLReader::END_ELEMENT) {
 		
 		}
 	  
 	  // Third, get the children.
+	   
 	  $owl->getSectionChildren($owl, $section);
-	  
+/**
+ * 
+ */
+function getSectionChildren($owl, &$section) {
+	while ($owl->read()){
+		if ($owl->nodeType == XMLReader::ELEMENT) {
+		
+		}
+		if ($owl->name == !$section['children'] && $owl->nodeType == XMLReader::END_ELEMENT) {
+		  return;
+		}
+	}
+}	  
 	  // Deal with each section of OWL.
 	  switch ($section['name']) {
 	  	case 'owl:AnnotationProperty':
@@ -86,31 +101,15 @@ function getsectionValue($owl,&$section) {
 	}
 }
 
-/**
- * 
- */
-function getSectionChildren($owl, &$section) {
-	while ($owl->read()){
-		if ($owl->nodeType == XMLReader::ELEMENT) {
-		
-		}
-		if ($owl->name == $section['name'] && $owl->nodeType == XMLReader::END_ELEMENT) {
-		  return;
-		}
-	}
-}
+
 /**
  * 
  */
 function handleAnnotationProperty(&$section) {
 	while ($owl->read()){
 		if ($owl->nodeType == XMLReader::ELEMENT) {
+			
 		}
-		if ($owl->name == $section['Attribute'])
-	
-	}
-	'IAO' => "XXXXXXX";
-	''
 }
 // now parse the input data
 
