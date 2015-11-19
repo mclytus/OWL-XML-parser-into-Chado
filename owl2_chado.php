@@ -42,7 +42,7 @@ while ($owl->read()){
 	  $section['name'] = $owl->name;
 	  
 	  // First, get the attributes.
-	  getSectionAttributes ($owl, $section);
+	  $oxl->getSectionAttributes ($owl, $section);
 /**
  * 
  */
@@ -56,6 +56,7 @@ function getSectionAttributes($owl, &$section) {
 		}
 	  
 	  // Second, get the value.
+	  $owl->getValue
 /**
  * 
  */
@@ -70,7 +71,7 @@ function getsectionValue($owl,&$section) {
 		}
 	  
 	  // Third, get the children.
-	  getSectionChildren($owl, $section);
+	  $owl->getSectionChildren($owl, $section);
 	  
 	  // Deal with each section of OWL.
 	  switch ($section['name']) {
