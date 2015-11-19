@@ -31,7 +31,7 @@ print $owl->read();
 // print $owl->read();
 
 // Open or load the OWL file for parsing.
-// $owl:Ontology = nodeType
+$owl:Ontology = nodeType
 $owl->open('ro.owl');
 while ($owl->read()){  
 	if ($owl->nodeType == XMLReader::ELEMENT) {
@@ -75,9 +75,7 @@ while ($owl->read()){
 	  // Third, get the children.
 	  $section['children'] = array();
 	  getSectionChildren($owl, $section['children']);
-/**
- * 
- */
+
 	  // Deal with each section of OWL.
 	  switch ($section['name']) {
 	  	case 'owl:AnnotationProperty':
@@ -90,7 +88,9 @@ while ($owl->read()){
 	  
 	}
 }
-
+/**
+ * 
+ * /
 
 function getSectionChildren($owl, &$section) {
 	while ($owl->read()){
