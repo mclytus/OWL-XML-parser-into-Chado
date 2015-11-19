@@ -27,6 +27,11 @@
 // Load the XML file.
 $owl = new XMLReader();
 
+print $owl->read();
+// print $owl->moveToNextAttribute();
+// print $owl->read();
+
+
 // Open the OWL file for parsing.
 $owl->open('ro.owl');
 while ($owl->read()){  
