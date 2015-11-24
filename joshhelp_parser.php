@@ -48,12 +48,13 @@ while ($owl->read())
 		{
 			if ($owl->nodeType==XMLReader::ELEMENT)
 			{
+				print "ELEMENT" . $owl->name . "\n";
 				if ($owl->hasAttributes&&$owl->nodeType==XMLReader::ELEMENT)
 				{
 					for ($n=0;$n<$owl->attributeCount;$n++)
 					{	
 						$owl->moveToFirstAttribute();
-						print $owl->name ."\n";
+						print $owl->name ." = ";
 						print $owl->value ."\n";
 					}
 				}
