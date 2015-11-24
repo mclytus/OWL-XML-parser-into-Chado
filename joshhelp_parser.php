@@ -16,8 +16,10 @@ while ($owl->read())
 	{
 		while ($owl->nodeType!=XMLReader::END_ELEMENT||$owl->name!="owl:Ontology")
 		{
-			if ($owl->nodeType==XMLReader::ELEMENT)
+			if ($owl->nodeType==XMLReader::ELEMENT) // check to see if this node is a element
 			{
+				// This is the switch statement below that can be written instead of the if logic statement for foaf:homepage
+				// It determines the specific name of the element
 				switch ($owl->name)
 				{
 					case 'foaf:homepage':
