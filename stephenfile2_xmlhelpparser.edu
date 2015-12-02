@@ -1,0 +1,197 @@
+<?php
+
+/**
+ *  @file
+ *  @add file from header
+ *
+ */
+
+// Load the XML file.
+$owl = new XMLReader();
+// Open the OWL file for parsing.
+$owl->open('ro.owl');
+
+// Holds all of the namespaces used by this OWL file. The array
+// is a set of key/value pairs where the key is the namespace
+// in uppercase letters and the value is the URL for the vocabulary.
+$namespaces = array();
+
+while ($owl->read()) {
+  
+  if ($owl->nodeType == XMLReader::ELEMENT) {
+    
+    // Deal with each section of OWL.
+    switch ($owl->name) {
+      case 'rdf:RDF':
+        handle_namespaces($owl, $namespaces);
+        break;
+      case 'owl:Ontology':
+        handle_header($owl);
+        break;
+      case 'owl:AnnotationProperty':
+        handle_annotation_property($owl);
+        break;
+      case 'rdf:Description':
+        break;
+      case 'owl:ObjectProperty':
+        handle_object_property($owl);
+        break;
+    }
+  }
+}
+$owl->close();
+
+/**
+ * Retreives the namespaces from the OWL rdf:RDF tag.
+ * 
+ * @param $owl
+ *   The XML reader object.
+ * @param $namespaces
+ *   An empty array into which the namespaces will be written
+ *   
+ * @return
+ *   no return value.
+ */
+function handle_namespaces($owl, $namespaces){
+  // Iterate over the attributes and get those that
+}
+
+/**
+ *
+ * @param
+ * $owl
+ */
+function handle_header($owl) {
+  $title = '';
+  $description = '';
+  $homepage = '';
+  $dbname = '';
+  $matches = array();
+  
+  // The about attribute contains the URL for the resource of this
+  // OWL file. We will use the name of the OWL file as the
+  // chado.db.name field.
+  $about = $owl->getAttribute('rdf:about');
+  if (preg_match('/^.*\/(.*)\.owl.*$/', $about, $matches)) {
+    $dbname = strtoupper($matches[1]);
+  }
+  else {
+    print "ERROR: count not find the database name\n";
+    exit();
+  }
+  
+  // Itereate through the XML elements to find the header tags that we
+  // will support.
+  while ($owl->read()) {
+    if ($owl->nodeType == XMLReader::ELEMENT) {
+      $matches = array();
+      $name = $owl->name;
+      switch ($name) {
+        case 'dc:title':
+          $owl->read();
+          $title = $owl->value;
+          // Goes to the chado.cv.name field.
+          break;
+        case 'dc:description':
+          $owl->read();
+          $description = $owl->value;
+          // Goes to the chado.cv.description field.
+          break;
+        case 'dc:source':
+          break;
+        case 'foaf:homepage':
+          $owl->read();
+          $homepage = $owl->value;
+          // Goes to the chado.db.url field.
+          break;
+        case 'owl:imports':
+          // Ignore these lines. Not needed for loading into Chado.
+          break;
+      }
+    }
+    // If we've reached the end of the ObjectProperty block then rreturn.
+    if ($owl->nodeType == XMLReader::END_ELEMENT and $owl->name == 'owl:Ontology') {
+      // print "DB Name: $dbname\n";
+      // print "Title: $title\n";
+      // print "Description: $description\n";
+      // print "Homepage: $homepage\n";
+      // Create the CV and DB records here.
+      
+      return;
+    }
+  }
+}
+
+/**
+ *
+ * @param
+ * $owl
+ */
+function handle_object_property($owl) {
+  // The about attribute contains the URL for the resource (our term).
+  // The chado.db.name and chado.dbxref.accession should be in this URL
+  // and we can
+  $about = $owl->getAttribute('rdf:about');
+  
+  // Itereate through the XML elements to find the header tags that we
+  // will support.
+  while ($owl->read()) {
+    if ($owl->nodeType == XMLReader::ELEMENT) {
+      $matches = array();
+      $name = $owl->name;
+      switch ($name) {
+        case 'rdfs:label':
+          // $owl->read();
+          // $value = $owl->value;
+          // print "$name\t$value\n";
+          // Goes to chado.cvterm.name
+          break;
+        case 'rdfs:range':
+          // Not needed for Chado.
+          break;
+        case 'rdfs:domain':
+          break;
+        case 'rdfs:subPropertyOf':
+          break;
+        case 'rdfs:comment':
+          break;
+        case 'rdf:type':
+          break;
+        case (preg_match('/^oboInOwl:(.*)$/', $name, $matches) ? TRUE : FALSE):
+          // create a function to read in the OboInOwl tags.
+          $accession = $matches[1];
+          break;
+        case (preg_match('/^obo:(.*)$/', $name, $matches) ? TRUE : FALSE):
+          // OBO terms can either be from the OBO vocabulary or from another
+          // onotology (e.g. IAO or RO).
+          $id = $matches[1];
+          $vocab = '';
+          $accession = '';
+          $matches = array();
+          if (preg_match('/^(.*)_(.*)$/', $id, $matches)) {
+            $vocab = $matches[1];
+            $accession = $matches[2];
+          }
+          else {
+            $vocab = 'OBO';
+            $accession = $id;
+          }
+          // Deal with the term
+          break;
+        case (preg_match('/^owl:(.*)$/', $name, $matches) ? TRUE : FALSE):
+          break;
+      }
+    }
+    // If we've reached the end of the ObjectProperty block then rreturn.
+    if ($owl->nodeType == XMLReader::END_ELEMENT and $owl->name == 'owl:ObjectProperty') {
+      return;
+    }
+  }
+}
+/**
+ *
+ * @param
+ * $owl
+ */
+function handle_annotation_property($owl) {
+}
