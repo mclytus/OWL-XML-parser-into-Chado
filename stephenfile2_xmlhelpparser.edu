@@ -1,5 +1,11 @@
 <?php
 
+
+
+
+
+
+
 /**
  *  @file
  *  @add file from header
@@ -53,6 +59,93 @@ $owl->close();
  *   no return value.
  */
 function handle_namespaces($owl, $namespaces){
+
+while ($owl->read());
+
+/**
+ * Retreives the namespaces from the OWL rdf:RDF tag.
+ *
+ * @param $owl The
+ * XML reader object.
+ * @param $namespaces An
+ * empty array into which the namespaces will be written
+ * 
+ * @return no return value.
+ */
+function handle_namespaces($owl, $namespaces) {
+  $namespaces = array();
+  $xml = '';
+  $xmlns = '';
+  
+  // Iterate over the attributes and get those that
+  
+  $xmlns = $owl->lookupNamespace('rdfs');
+  $xml = $owl->getAttribute('http://purl.obolibrary.org/obo/ro.owl');
+  
+//   print_r ($owl->lookupNamespace ('subsets')); print "\n";
+//   print_r ($owl->lookupNamespace ('obo')); print "\n";
+//   print_r ($owl->lookupNamespace ('rdfs')); print "\n";
+//   print_r ($owl->lookupNamespace ('foaf')); print "\n";
+//   print_r ($owl->lookupNamespace ('rdf')); print "\n";
+//   print_r ($owl->lookupNamespace ('cito')); print "\n";
+//   print_r ($owl->lookupNamespace ('owl')); print "\n";
+//   print_r ($owl->lookupNamespace ('xsd')); print "\n";
+//   print_r ($owl->lookupNamespace ('oboInOwl')); print "\n";  
+//   print_r ($owl->getAttribute('xml:base')); print "\n";
+//   print_r ($owl->lookupNamespace('dc')); print "\n";
+  
+  
+  // Itereate through the XML element rdf:RDF to find the namespaces that we
+  // will support.
+
+   if ($owl->name=="" && $owl->nodeType == XMLReader::ELEMENT) {
+     for ($n = 0; $n < $owl->attributeCount; $n++) {
+       $owl->moveToAttributeNo($n);
+       print $owl->name . ' = "' . $owl->value . "\"\n";
+     }
+     
+    $name = $owl->name;
+      switch ($name) {
+        case 'xml:base':
+          
+          // Goes to chado.cvterm.name
+          break;
+        case 'xmlns:dc':
+          for ($n = 0; $n < $owl->attributeCount; $n++) {
+            $owl->moveToAttributeNo($n);
+            print $owl->name . ' = "' . $owl->value . "\"\n";
+          }
+          break;
+      }
+   }
+ }
+     
+//         case 'xmlns:subsets':
+//           break;
+//         case 'xmlns:obo':
+//           break;
+//         case 'xmlns:rdfs':
+//           break;
+//         case 'xmlns:foaf':
+//           break;
+//         case 'xmlns:cito':
+//           break;
+//         case 'xmlns:owl':
+//           break;
+//         case 'xmlns:xsd':
+//           break;
+//         case 'xmlns:rdf':
+//           break;
+//         case 'xmlns:oboInOwl':
+//           break;
+//           if ($owl->nodeType == XMLReader::END_ELEMENT and $owl->name == 'rdf:RDF') {
+//             return;
+//           }
+//       }
+//     }
+//   }
+// }
+
   // Iterate over the attributes and get those that
 }
 
