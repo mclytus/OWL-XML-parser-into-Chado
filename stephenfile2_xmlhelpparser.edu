@@ -1,5 +1,34 @@
 <?php
 
+
+/**
+* @ file
+*
+*/
+
+function tripal_insert_cv($name, $definition) {
+
+$owlheader_values = array(
+'title' => cv.name
+'description' => cv.description
+);
+
+if (!$cv)) {
+  print "ERROR can not read vocabulary: '$cv'\n";
+  exit();
+}
+
+/**
+*
+*  @file
+*/
+
+function tripal_insert_db($values, $options = array()) {
+
+
+}
+
+
 /**
  *  @file
  *  @add file from header
