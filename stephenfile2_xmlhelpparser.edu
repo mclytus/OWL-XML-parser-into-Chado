@@ -6,22 +6,27 @@
 *
 */
 
-function tripal_insert_cv($name, $definition) {
+function tripal_insert_cv($cv_name, $cv_definition) {
 
-$owlheader_values = array(
-'title' => $cv.name
-'description' => $cv.description
-);
-
-
-$cv.name = "RO Web Ontology";
-$cv.name = strtolower($str);
-echo $cv.name; // Prints ro web ontology
-
-if (!$cv)) {
-  print "ERROR can not read vocabulary: '$cv'\n";
-  exit();
+  $owlheader_values = array(
+    'description' => $cv_definition,
+    'title' => $cv_name,
+    );
+  
+  $cv_name = "OBO Relations Ontology";
+  $cv_name = mb_strtolower($cv_name);
+    echo $cv_name; // Prints  lower case "obo relations ontology"
+  
+  $cv_name = str_replace ($cv_name, "","obo_relations_ontology");
+   }
+   // print "$cv_name". "\n";
+   
+   
+  if(!$cv) {
+    print "ERROR not able read vocabulary: '\n";
+    exit ();
   }
+  
 }  
 
 
