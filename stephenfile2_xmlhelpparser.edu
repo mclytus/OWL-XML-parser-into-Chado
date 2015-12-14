@@ -9,14 +9,21 @@
 function tripal_insert_cv($name, $definition) {
 
 $owlheader_values = array(
-'title' => cv.name
-'description' => cv.description
+'title' => $cv.name
+'description' => $cv.description
 );
+
+
+$cv.name = "RO Web Ontology";
+$cv.name = strtolower($str);
+echo $cv.name; // Prints ro web ontology
 
 if (!$cv)) {
   print "ERROR can not read vocabulary: '$cv'\n";
   exit();
-}
+  }
+}  
+
 
 /**
 *
