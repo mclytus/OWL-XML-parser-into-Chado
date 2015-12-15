@@ -13,10 +13,10 @@ function tripal_cv_owl_insert_cv($cv_name, $cv_definition) {
     'name' => $cv_name,
     );
   
-   $cv_name = mb_strtolower($cv_name);
+   $cv_name = strtolower($cv_name);
     echo $cv_name; // Prints lower case "obo relations ontology"
   
-  $pattern = '/^.*\/(.*)\.owl:*$/<>';
+  $pattern = '/[^\w]/g';
   $replacement = '_';
   $string = 'cv_name';
     
