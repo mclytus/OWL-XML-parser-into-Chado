@@ -13,15 +13,11 @@ function tripal_cv_owl_insert_cv($cv_name, $cv_definition) {
     'name' => $cv_name,
     );
   
-   $cv_name = strtolower($cv_name);
-    echo $cv_name; // Prints lower case "obo relations ontology"
+  $cv_name = preg_replace("/[^\w]/g", "_", strtolower($cv_name));
   
-  $pattern = '/[^\w]/g';
-  $replacement = '_';
-  $string = 'cv_name';
-    
-    echo preg_replace($pattern, $replacement, $cv_name);
-    print "$cv_name". "\n";
+  tripal_insert_cv ($cv_name, $cv_definition);
+  
+   // print "$cv_name". "\n";
     
   if(!$cv) {
     print "ERROR not able read vocabulary: '\n";
@@ -39,13 +35,14 @@ function tripal_cv_owl_insert_cv($cv_name, $cv_definition) {
   
 //   function tripal_insert_db($values, $options = array()) {
     
-    
-// $owl_values = array(
-// 'NULL' = $db_description,
-// 'RO' = $db_name,
-// 'foaf:homepage = $db_url,
-// );
-
+    $owl_values = array(
+    'NULL' => $db_description,
+    'RO' => $db_name,
+    'homepage' => $db_url
+  );
+  
+   
+  tripal_insert_db($db_name, $db_url, $db_description);
 // print "db_name: $db_name\n";
 
 // if (!$db) {
