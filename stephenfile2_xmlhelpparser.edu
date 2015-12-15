@@ -40,18 +40,18 @@ function tripal_cv_owl_insert_cv($cv_name, $cv_definition) {
 //   function tripal_insert_db($values, $options = array()) {
     
     
-//     $db.description = NULL;
-//     $db.name = "RO";
-//     $db.url = foaf:homepage;
-    
- 
- 
-  // print "DB Name: $dbname\n";
-  
+// $owl_values = array(
+// 'NULL' = $db_description,
+// 'RO' = $db_name,
+// 'foaf:homepage = $db_url,
+// );
 
+// print "db_name: $db_name\n";
 
-
-
+// if (!$db) {
+// print "ERROR not able read vocabulary: '\n";
+// exit();
+// }
 
 /**
 *  @file
