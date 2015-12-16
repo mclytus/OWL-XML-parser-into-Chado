@@ -8,47 +8,39 @@
 
 function tripal_cv_owl_insert_cv($cv_name, $cv_definition) {
   
-  $owlheader_values = array(
+  $cv = array(
     'description' => $cv_definition,
-    'name' => $cv_name,
-    );
+    'name' => preg_replace("/[^\w]/g", "_", strtolower($cv_name))
+  );
+  // print "$cv_name" . "\n";
   
-  $cv_name = preg_replace("/[^\w]/g", "_", strtolower($cv_name));
+  if(tripal_insert_cv ($cv)) {
+    print "ERROR: '\n";
+    exit (); 
   
-  tripal_insert_cv ($cv_name, $cv_definition);
-  
-   // print "$cv_name". "\n";
-    
-  if(!$cv) {
-    print "ERROR not able read vocabulary: '\n";
-    exit ();
   }
-} 
-  
+}
 
+
+/*
+ * @param
+ * The owl file has values to be inputted into Chado tables
+ */
+function tripal_db_owl_insert_db($values, $options = array()) {
   
-  /*
-   * @param
-   * The owl file has values to be inputted into Chado tables
-   * 
-   */
-  
-//   function tripal_insert_db($values, $options = array()) {
-    
-    $owl_values = array(
+  $db = array(
     'NULL' => $db_description,
-    'RO' => $db_name,
+    'RO' => preg_replace("/[^\w]/g", "_", strtolower($db_name)),
     'homepage' => $db_url
   );
   
-   
-  tripal_insert_db($db_name, $db_url, $db_description);
-// print "db_name: $db_name\n";
-
-// if (!$db) {
-// print "ERROR not able read vocabulary: '\n";
-// exit();
-// }
+    
+  if (tripal_insert_db ($db)) {
+    print "ERROR: '\n";
+    exit();  
+  }
+  // print "db_name: $db_name\n";
+}
 
 /**
 *  @file
