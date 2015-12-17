@@ -10,7 +10,7 @@ function tripal_cv_owl_insert_cv($cv_name, $cv_definition) {
   
   $cv = array(
     'description' => $cv_definition,
-    'name' => preg_replace("/[^\w]/g", "_", strtolower($cv_name))
+    'name' => preg_replace("/[^\w]/", "_", strtolower($cv_name))
   );
   // print "$cv_name" . "\n";
   
@@ -30,12 +30,12 @@ function tripal_db_owl_insert_db($values, $options = array()) {
   
   $db = array(
     'NULL' => $db_description,
-    'RO' => preg_replace("/[^\w]/g", "_", strtolower($db_name)),
+    'RO' => preg_replace("/[^\w]/", "_", strtoupper($db_name)),
     'homepage' => $db_url
   );
   
     
-  if (tripal_insert_db ($db)) {
+  if (tripal_insert_db ($db_name, $db_url, $db_description)) {
     print "ERROR: '\n";
     exit();  
   }
