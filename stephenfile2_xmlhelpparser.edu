@@ -14,7 +14,7 @@ function tripal_cv_owl_insert_cv($cv_name, $cv_definition) {
   );
   // print "$cv_name" . "\n";
   
-  if(tripal_insert_cv ($cv)) {
+  if(tripal_insert_cv ($cv_name, $cv_definition)) {
     print "ERROR: '\n";
     exit (); 
   
