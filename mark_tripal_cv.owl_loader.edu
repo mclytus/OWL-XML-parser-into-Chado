@@ -1,74 +1,68 @@
 <?php
-
-/*
- * @param $owl file 
- * The owl file has ontology (OBO) values being inputted into Chado tables 
- * 
+/**
+ * @file
+ * @add file from header
  */
 
-function tripal_cv_owl_insert_cv($cv_name, $cv_definition) {
-  
-  $cv = array(
-    'description' => $cv_definition,
-    'name' => preg_replace("/[^\w]/g", "_", strtolower($cv_name))
-  );
-  // print "$cv_name" . "\n";
-  
-  if(tripal_insert_cv ($cv_name, $cv_definition)) {
-    print "ERROR: '\n";
-    exit (); 
-  
-  }
-}
+/*
+ * @param $owl file
+ * The owl file has ontology (OBO) values being inputted into Chado tables
+ *
+ */
+// function tripal_cv_owl_insert_cv($cv_name, $cv_definition) {
 
+// $cv = array(
+// 'description' => $cv_definition,
+// 'name' => preg_replace("/[^\w]/", "_", strtolower($cv_name))
+// );
+// // print "$cv_name" . "\n";
+
+// if(tripal_insert_cv ($cv)) {
+// print "ERROR: '\n";
+// exit ();
+// }
+// }
 
 /*
  * @param
  * The owl file has values to be inputted into Chado tables
  */
-function tripal_db_owl_insert_db($values, $options = array()) {
-  
+function tripal_db_owl_insert_db($db, $options = array()) {
   $db = array(
-    'NULL' => $db_description,
-    'RO' => preg_replace("/[^\w]/g", "_", strtolower($db_name)),
+    'description' => $db_description,
+    'name' => preg_replace("/[^\w]/", "_", ($db_name)),
     'homepage' => $db_url
   );
-  
-    
-  if (tripal_insert_db ($db)) {
+
+  if (tripal_insert_db($db)) {
     print "ERROR: '\n";
-    exit();  
+    exit();
   }
-  // print "db_name: $db_name\n";
 }
 
-/**
-*  @file
-*  @add file from header
-*
-*/
-//tripal_cv_parse_owl('ro.owl');
+
+
+
+// tripal_cv_parse_owl('ro.owl');
 
 /**
  *
- * @param unknown $filename
+ * @param unknown $filename 
  */
 function tripal_cv_parse_owl($filename) {
-
-
-
+  
   // Load the XML file.
   $owl = new XMLReader();
-
+  
   // Open the OWL file for parsing.
   if (!$owl->open($filename)) {
     print "ERROR opening OWL file: '$filename'\n";
     exit();
   }
-
+  
   // Holds all of the namespaces used by this OWL file.
   $namespaces = array();
-
+  
   do {
     if ($owl->nodeType == XMLReader::ELEMENT) {
       // Deal with each section of OWL.
@@ -96,7 +90,7 @@ function tripal_cv_parse_owl($filename) {
     }
   }
   while ($owl->read());
-
+  
   // Close the XMLReader file object.
   $owl->close();
 }
@@ -108,7 +102,7 @@ function tripal_cv_parse_owl($filename) {
  * XML reader object.
  * @param $namespaces An
  * empty array into which the namespaces will be written
- *
+ * 
  * @return no return value.
  */
 function tripal_owl_handle_namespaces($owl, &$namespaces) {
@@ -123,6 +117,8 @@ function tripal_owl_handle_namespaces($owl, &$namespaces) {
   }
 }
 
+
+
 /**
  *
  * @param
@@ -132,21 +128,21 @@ function tripal_owl_handle_header($owl) {
   $title = '';
   $description = '';
   $homepage = '';
-  $dbname = '';
+  $db_name = '';
   $matches = array();
-
+  
   // The about attribute contains the URL for the resource of this
   // OWL file. We will use the name of the OWL file as the
   // chado.db.name field.
   $about = $owl->getAttribute('rdf:about');
   if (preg_match('/^.*\/(.*)\.owl.*$/', $about, $matches)) {
-    $dbname = strtoupper($matches[1]);
+    $db_name = strtoupper($matches[1]);
   }
   else {
     print "ERROR: count not find the database name\n";
     exit();
   }
-
+  
   // Itereate through the XML elements to find the header tags that we
   // will support.
   while ($owl->read()) {
@@ -180,13 +176,23 @@ function tripal_owl_handle_header($owl) {
     }
     // If we've reached the end of the ObjectProperty block then rreturn.
     if ($owl->nodeType == XMLReader::END_ELEMENT and $owl->name == 'owl:Ontology') {
-      print "DB Name: $dbname\n";
+      print "DB Name: $db_name\n";
       print "Title: $title\n";
       print "Description: $description\n";
       print "Homepage: $homepage\n";
       print "Resource: $resource\n";
+      
       // Create the CV and DB records here.
-
+      $cv_name = preg_replace("/[^\w]/", "_", strtolower($title));
+      if (!tripal_insert_cv($cv_name, $description)) {
+        print "ERROR: '\n";
+        exit();
+      }
+      
+      if (!tripal_insert_db(array('url' => $homepage, 'name' => $db_name))) {
+        print "ERROR: '\n";
+        exit();
+      }
       return;
     }
   }
@@ -203,16 +209,16 @@ function tripal_owl_handle_object_property($owl) {
   // and we can
   $about = $owl->getAttribute('rdf:about');
   print "$about\n";
-
+  
   // If this element is empty then just return.
   if ($owl->isEmptyElement) {
     return;
   }
-
+  
   // Move the element pointer to the first element inside of the
   // ObjectProperty stanza.
   $owl->read();
-
+  
   // Itereate through the XML elements to find the header tags that we
   // will support.
   do {
@@ -283,16 +289,16 @@ function tripal_owl_handle_annotation_property($owl) {
   // and we can
   $about = $owl->getAttribute('rdf:about');
   print "$about\n";
-
+  
   // If this element is empty then just return.
   if ($owl->isEmptyElement) {
     return;
   }
-
+  
   // Move the element pointer to the first element inside of the
   // AnnotationProperty stanza.
   $owl->read();
-
+  
   // Itereate through the XML elements to find the header tags that we
   // will support.
   do {
@@ -302,14 +308,14 @@ function tripal_owl_handle_annotation_property($owl) {
     }
     else if ($owl->nodeType == XMLReader::ELEMENT) {
       $matches = array();
-
+      
       $name = $owl->name;
       switch ($name) {
         case 'rdfs:label':
           $owl->read();
           $value = $owl->value;
           print "$name\t$value\n";
-
+          
           // Goes to chado.cvterm.name
           break;
         case 'rdfs:seeAlso':
@@ -328,10 +334,10 @@ function tripal_owl_handle_annotation_property($owl) {
           $value = $owl->value;
           print "$name\t$value\n";
           break;
-          // case (preg_match('/^oboInOwl:(.*)$/', $name, $matches) ? TRUE : FALSE):
-          // create a function to read in the OboInOwl tags.
-          // $accession = $matches[1];
-          // break;
+        // case (preg_match('/^oboInOwl:(.*)$/', $name, $matches) ? TRUE : FALSE):
+        // create a function to read in the OboInOwl tags.
+        // $accession = $matches[1];
+        // break;
         case (preg_match('/^obo:(.*)$/', $name, $matches) ? TRUE : FALSE):
           // OBO terms can either be from the OBO vocabulary or from another
           // onotology (e.g. IAO or RO).
@@ -371,16 +377,16 @@ function tripal_owl_handle_description($owl) {
   // and we can
   $about = $owl->getAttribute('rdf:about');
   print "$about\n";
-
+  
   // If this element is empty then just return.
   if ($owl->isEmptyElement) {
     return;
   }
-
+  
   // Move the element pointer to the first element inside of the
   // Description stanza.
   $owl->read();
-
+  
   do {
     // If we've reached the end of the description block then return.
     if ($owl->nodeType == XMLReader::END_ELEMENT and $owl->name == 'rdf:Description') {
@@ -394,7 +400,7 @@ function tripal_owl_handle_description($owl) {
           $owl->read();
           $value = $owl->value;
           print "$name\t$value\n";
-
+          
           // Goes to chado.cvterm.name
           break;
         case 'rdfs:subPropertyOf':
@@ -405,7 +411,7 @@ function tripal_owl_handle_description($owl) {
           break;
         case 'rdfs:subClassOf':
           break;
-
+        
         case (preg_match('/^oboInOwl:(.*)$/', $name, $matches) ? TRUE : FALSE):
           // create a function to read in the OboInOwl tags.
           $accession = $matches[1];
@@ -449,16 +455,16 @@ function tripal_owl_handle_class($owl) {
   // and we can
   $about = $owl->getAttribute('rdf:about');
   print "$about\n";
-
+  
   // If this element is empty then just return.
   if ($owl->isEmptyElement) {
     return;
   }
-
+  
   // Move the element pointer to the first element inside of the
   // ObjectProperty stanza.
   $owl->read();
-
+  
   do {
     // If we've reached the end of the Class block then return.
     if ($owl->nodeType == XMLReader::END_ELEMENT and $owl->name == 'owl:Class') {
@@ -472,7 +478,7 @@ function tripal_owl_handle_class($owl) {
           $owl->read();
           $value = $owl->value;
           print "$name\t$value\n";
-
+          
           // Goes to chado.cvterm.name
           break;
         case 'rdfs:subClassOf':
