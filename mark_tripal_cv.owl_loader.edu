@@ -4,45 +4,6 @@
  * @add file from header
  */
 
-/*
- * @param $owl file
- * The owl file has ontology (OBO) values being inputted into Chado tables
- *
- */
-// function tripal_cv_owl_insert_cv($cv_name, $cv_definition) {
-
-// $cv = array(
-// 'description' => $cv_definition,
-// 'name' => preg_replace("/[^\w]/", "_", strtolower($cv_name))
-// );
-// // print "$cv_name" . "\n";
-
-// if(tripal_insert_cv ($cv)) {
-// print "ERROR: '\n";
-// exit ();
-// }
-// }
-
-/*
- * @param
- * The owl file has values to be inputted into Chado tables
- */
-function tripal_db_owl_insert_db($db, $options = array()) {
-  $db = array(
-    'description' => $db_description,
-    'name' => preg_replace("/[^\w]/", "_", ($db_name)),
-    'homepage' => $db_url
-  );
-
-  if (tripal_insert_db($db)) {
-    print "ERROR: '\n";
-    exit();
-  }
-}
-
-
-
-
 // tripal_cv_parse_owl('ro.owl');
 
 /**
@@ -68,11 +29,11 @@ function tripal_cv_parse_owl($filename) {
       // Deal with each section of OWL.
       switch ($owl->name) {
         case 'rdf:RDF':
-          tripal_owl_handle_namespaces($owl, $namespaces);
-          print_r($namespaces);
+          // tripal_owl_handle_namespaces($owl, $namespaces);
+          // print_r($namespaces);
           break;
         case 'owl:Ontology':
-          tripal_owl_handle_header($owl);
+          // tripal_owl_handle_header($owl);
           break;
         case 'owl:AnnotationProperty':
           // tripal_owl_handle_annotation_property($owl);
@@ -84,7 +45,7 @@ function tripal_cv_parse_owl($filename) {
           // tripal_owl_handle_object_property($owl);
           break;
         case 'owl:Class':
-          // tripal_owl_handle_class($owl);
+          tripal_owl_handle_class($owl);
           break;
       }
     }
@@ -117,7 +78,22 @@ function tripal_owl_handle_namespaces($owl, &$namespaces) {
   }
 }
 
-
+/*
+ * @param
+ * The owl file has values to be inputted into Chado tables
+ */
+function tripal_db_owl_insert_db($db, $options = array()) {
+  $db = array(
+    'description' => $db_description,
+    'name' => $db_name,
+    'homepage' => $db_url
+  );
+  
+  if (tripal_insert_db($db)) {
+    print "ERROR: '\n";
+    exit();
+  }
+}
 
 /**
  *
@@ -189,7 +165,10 @@ function tripal_owl_handle_header($owl) {
         exit();
       }
       
-      if (!tripal_insert_db(array('url' => $homepage, 'name' => $db_name))) {
+      if (!tripal_insert_db(array(
+        'url' => $homepage,
+        'name' => $db_name
+      ))) {
         print "ERROR: '\n";
         exit();
       }
@@ -455,6 +434,36 @@ function tripal_owl_handle_class($owl) {
   // and we can
   $about = $owl->getAttribute('rdf:about');
   print "$about\n";
+  
+  // Insert dbxref API to add new database and accession with the OWl class.
+  
+  $matches = array(
+    $dbs[''] = $db_name
+    ['accession'] = $accession
+  );
+  
+  if (preg_match('/.*\/(.+)_(.+)/', $about, $matches)) {
+    $db_name = strtoupper($matches[1]);
+    $accession = $matches[2];
+  }
+  print "CORRECT: '$db_name & $accession'\n";
+  
+  if (!tripal_insert_db(array(
+    'name' => $db_name
+  ))) {
+    print "ERROR: '\n";
+    exit();
+  }
+  
+  // $values = array(
+  // 'db_id' => $db_name,
+  // 'accesion' => $accession
+  // );
+  
+  // if (!tripal_insert_dbxref($values)) {
+  // print "ERROR: '\n";
+  // exit();
+  // }
   
   // If this element is empty then just return.
   if ($owl->isEmptyElement) {
