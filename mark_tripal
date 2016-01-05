@@ -82,18 +82,18 @@ function tripal_owl_handle_namespaces($owl, &$namespaces) {
  * @param
  * The owl file has values to be inputted into Chado tables
  */
-function tripal_db_owl_insert_db($db, $options = array()) {
-  $db = array(
-    'description' => $db_description,
-    'name' => $db_name,
-    'homepage' => $db_url
-  );
-  
-  if (tripal_insert_db($db)) {
-    print "ERROR: '\n";
-    exit();
-  }
-}
+// function tripal_db_owl_insert_db($db, $options = array()) {
+// $db = array(
+// 'description' => $db_description,
+// 'name' => $db_name,
+// 'homepage' => $db_url
+// );
+
+// if (tripal_insert_db($db)) {
+// print "ERROR: '\n";
+// exit();
+// }
+// }
 
 /**
  *
@@ -438,29 +438,24 @@ function tripal_owl_handle_class($owl) {
   // Insert dbxref API to add new database and accession with the OWl class.
   
   $matches = array();
-  $dbs[''] = $db_name;
-  $dbs['accession'] = $accession;
-  
   if (preg_match('/.*\/(.+)_(.+)/', $about, $matches)) {
     $db_name = strtoupper($matches[1]);
     $accession = $matches[2];
   }
   print "CORRECT: '$db_name & $accession'\n";
   
-  $db = preg_match('/.*\/(.+)_(.+)/', $about, $matches) {
-    if (!tripal_insert_db($dbs[''], $dbs['accession']));
+    
+$db = tripal_insert_db(array( 
+  $db_name => 'name'
+));  
+    
+  if (!$db) {
+  print "'$db_name'\n";
+  // Deal with error.
   }
   
-  // if (!tripal_insert_db(array(
-  // $dbs['name'] => $db_name,
-  // ))) {
-  // print "ERROR: '\n";
-  // exit();
-  // }
-  
   // $values[$db] = array();
-  // $db['db_name'] = $db_id;
-  // $db['version'] = $version;
+  // $db['db'] = $db_id;
   // $db['description'] = $description;
   // $db['accession'] = $accession;
   
@@ -472,7 +467,7 @@ function tripal_owl_handle_class($owl) {
   // If this element is empty then just return.
   if ($owl->isEmptyElement) {
     return;
-  }
+ }
   
   // Move the element pointer to the first element inside of the
   // ObjectProperty stanza.
