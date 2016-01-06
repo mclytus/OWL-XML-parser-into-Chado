@@ -501,6 +501,29 @@ function tripal_owl_handle_class($owl, &$ontologies) {
     $cv = $ontologies[$db_name]['cv'];
   }
   
+  
+  // Inserting CV term record. IMPORTANT NOTE: The insert cvterm function need to be
+  // fixed to add the db_id to be incorporated into the function. 
+  
+//   $term = array();
+//     $id = '';
+//     $name = '';
+//     $definition = '';
+//     $cv_name = '';
+    
+    
+    // Getting the CV name from the label title in the Class stanza
+    
+    // $cv_name = preg_match('/.*\/(.+)_(.+)/', $term, $matches)
+    
+//     $options = array (
+//       'id' => $accession
+//       'name' => $db_name,
+//       'cv_name' => $cv
+//     );
+
+    // $cvterm = tripal_insert_cvterm($term, $options = array())
+  
   // If this element is empty then just return.
   if ($owl->isEmptyElement) {
     return;
