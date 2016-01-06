@@ -11,7 +11,7 @@
  * @param unknown $filename 
  */
 function tripal_cv_parse_owl($filename) {
-  
+   
   // Load the XML file.
   $owl = new XMLReader();
   
@@ -24,6 +24,10 @@ function tripal_cv_parse_owl($filename) {
   // Holds all of the namespaces used by this OWL file.
   $namespaces = array();
   
+  // Holds an array of CV and DB records that have already been
+  // inserted (reduces number of queires).
+  $ontologies = array();
+  
   do {
     if ($owl->nodeType == XMLReader::ELEMENT) {
       // Deal with each section of OWL.
@@ -33,7 +37,7 @@ function tripal_cv_parse_owl($filename) {
           // print_r($namespaces);
           break;
         case 'owl:Ontology':
-          tripal_owl_handle_header($owl);
+          tripal_owl_handle_header($owl, $ontologies);
           break;
         // case 'owl:AnnotationProperty':
         // tripal_owl_handle_annotation_property($owl);
@@ -45,7 +49,7 @@ function tripal_cv_parse_owl($filename) {
         // tripal_owl_handle_object_property($owl);
         // break;
         case 'owl:Class':
-          tripal_owl_handle_class($owl);
+          tripal_owl_handle_class($owl, $ontologies);
           break;
         default:
           // print "Unhandled stanza: " . $owl->name . "\n";
@@ -87,7 +91,7 @@ function tripal_owl_handle_namespaces($owl, &$namespaces) {
  * @param
  * $owl
  */
-function tripal_owl_handle_header($owl) {
+function tripal_owl_handle_header($owl, &$ontologies) {
   $title = '';
   $description = '';
   $homepage = '';
@@ -147,7 +151,8 @@ function tripal_owl_handle_header($owl) {
       
       // Create the CV and DB records here.
       $cv_name = preg_replace("/[^\w]/", "_", strtolower($title));
-      if (!tripal_insert_cv($cv_name, $description)) {
+      $cv = tripal_insert_cv($cv_name, $description);
+      if (!$cv) {
         print "ERROR: '\n";
         exit();
       }
@@ -156,10 +161,14 @@ function tripal_owl_handle_header($owl) {
         'url' => $homepage,
         'name' => $db_name
       );
-      if (!tripal_insert_db($db)) {
+      $db = tripal_insert_db($db);
+      if (!$db) {
         print "ERROR: '\n";
         exit();
       }
+      
+      $ontologies[$db_name]['cv'] = $cv;
+      $ontologies[$db_name]['db'] = $db;
       return;
     }
   }
@@ -416,15 +425,14 @@ function tripal_owl_handle_description($owl) {
  * @param
  * $owl
  */
-function tripal_owl_handle_class($owl) {
+function tripal_owl_handle_class($owl, &$ontologies) {
   // The about attribute contains the URL for the resource (our term).
   // The chado.db.name and chado.dbxref.accession should be in this URL
   // and we can
   $about = $owl->getAttribute('rdf:about');
   // print "$about\n";
   
-  // Insert dbxref API to add new database and accession with the OWl class.
-  
+  // Get the DB name and accession from the about attribute.  
   $matches = array();
   $db_name = '';
   $accession = '';
@@ -432,26 +440,65 @@ function tripal_owl_handle_class($owl) {
     $db_name = strtoupper($matches[1]);
     $accession = $matches[2];
   }
-  // print "CORRECT: '$db_name & $accession'\n";
   
-  $db = array(
-    'name' => $db_name
+  // Insert a DB record.
+  $db = null;
+  if (!array_key_exists($db_name, $ontologies)) {
+    $db = array(
+      'name' => $db_name
+    );
+    $db = tripal_insert_db($db);
+    if (!$db) {
+      print "ERROR: '\n";
+      exit();
+    }
+    $ontologies[$db_name]['db'] = $db;
+    $ontologies[$db_name]['cv'] = NULL;
+  }
+  else {
+    $db = $ontologies[$db_name]['db'];
+  }
+  
+    
+  // Insert a dbxref record.
+  $values = array(
+    'db_id' => $db->db_id,
+    'accession' => $accession
   );
-  if (!tripal_insert_db($db)) {
+  $dbxref = tripal_insert_dbxref($values);
+  if (!$dbxref) {
     print "ERROR: '\n";
     exit();
   }
   
-  $values['db_id'] = $db;
-  
-  $values = array(
-    'db_id' => $db_id,
-    'accession' => $accession
-  );
-  
-  if (!tripal_insert_dbxref($values)) {
-    print "ERROR: '\n";
-    exit();
+  // Check to see if this database has records and if so, what CV it is using.
+  // Because the OWL Class doensn't specify a name that Chado wants for the
+  // cv table, we have ti discovery it or add it.  If we find a single record
+  // that has a cvterm (hence associated with a CV) then we'll reuse the same
+  // CV.  Otherwise, we must add a new CV record and we'll use the $db_name
+  // as the name.
+  $cv = null;
+  if (!$ontologies[$db_name]['cv']) {
+    $sql = "
+      SELECT CV.*
+      FROM {cvterm} CVT
+        INNER JOIN {dbxref} DBX ON DBX.dbxref_id = CVT.dbxref_id
+        INNER JOIN {db} DB      ON DB.db_id      = DBX.db_id
+        INNER JOIN {cv} CV      ON CVT.cv_id     = CV.cv_id
+      WHERE DB.db_id = :db_id
+      LIMIT 1 OFFSET 0
+    ";
+    $results = chado_query($sql, array(':db_id' => $db->db_id));
+    if (!$results) {
+      $cv = tripal_insert_cv($db->name, '');
+    }
+    else {
+      $cv = $results->fetchObject();
+    }
+    $ontologies[$db_name]['cv'] = $cv;
+  }
+  else {
+    $cv = $ontologies[$db_name]['cv'];
   }
   
   // If this element is empty then just return.
@@ -466,6 +513,8 @@ function tripal_owl_handle_class($owl) {
   do {
     // If we've reached the end of the Class block then return.
     if ($owl->nodeType == XMLReader::END_ELEMENT and $owl->name == 'owl:Class') {
+      // Insert CVTerm before returning, if we have all the necessary 
+      // information.
       return;
     }
     else if ($owl->nodeType == XMLReader::ELEMENT) {
