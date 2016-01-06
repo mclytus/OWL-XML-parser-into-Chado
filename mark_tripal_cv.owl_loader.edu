@@ -29,24 +29,27 @@ function tripal_cv_parse_owl($filename) {
       // Deal with each section of OWL.
       switch ($owl->name) {
         case 'rdf:RDF':
-          // tripal_owl_handle_namespaces($owl, $namespaces);
+          tripal_owl_handle_namespaces($owl, $namespaces);
           // print_r($namespaces);
           break;
         case 'owl:Ontology':
-          // tripal_owl_handle_header($owl);
+          tripal_owl_handle_header($owl);
           break;
-        case 'owl:AnnotationProperty':
-          // tripal_owl_handle_annotation_property($owl);
-          break;
-        case 'rdf:Description':
-          // tripal_owl_handle_description($owl);
-          break;
-        case 'owl:ObjectProperty':
-          // tripal_owl_handle_object_property($owl);
-          break;
+        // case 'owl:AnnotationProperty':
+        // tripal_owl_handle_annotation_property($owl);
+        // break;
+        // case 'rdf:Description':
+        // tripal_owl_handle_description($owl);
+        // break;
+        // case 'owl:ObjectProperty':
+        // tripal_owl_handle_object_property($owl);
+        // break;
         case 'owl:Class':
           tripal_owl_handle_class($owl);
           break;
+        default:
+          // print "Unhandled stanza: " . $owl->name . "\n";
+          $owl->next();
       }
     }
   }
@@ -78,22 +81,6 @@ function tripal_owl_handle_namespaces($owl, &$namespaces) {
   }
 }
 
-/*
- * @param
- * The owl file has values to be inputted into Chado tables
- */
-function tripal_db_owl_insert_db($db, $options = array()) {
-  $db = array(
-    'description' => $db_description,
-    'name' => $db_name,
-    'homepage' => $db_url
-  );
-  
-  if (tripal_insert_db($db)) {
-    print "ERROR: '\n";
-    exit();
-  }
-}
 
 /**
  *
@@ -150,13 +137,13 @@ function tripal_owl_handle_header($owl) {
           break;
       }
     }
-    // If we've reached the end of the ObjectProperty block then rreturn.
+    // If we've reached the end of the Header block then return.
     if ($owl->nodeType == XMLReader::END_ELEMENT and $owl->name == 'owl:Ontology') {
-      print "DB Name: $db_name\n";
-      print "Title: $title\n";
-      print "Description: $description\n";
-      print "Homepage: $homepage\n";
-      print "Resource: $resource\n";
+      // print "DB Name: $db_name\n";
+      // print "Title: $title\n";
+      // print "Description: $description\n";
+      // print "Homepage: $homepage\n";
+      // print "Resource: $resource\n";
       
       // Create the CV and DB records here.
       $cv_name = preg_replace("/[^\w]/", "_", strtolower($title));
@@ -165,10 +152,11 @@ function tripal_owl_handle_header($owl) {
         exit();
       }
       
-      if (!tripal_insert_db(array(
+      $db = array(
         'url' => $homepage,
         'name' => $db_name
-      ))) {
+      );
+      if (!tripal_insert_db($db)) {
         print "ERROR: '\n";
         exit();
       }
@@ -187,7 +175,7 @@ function tripal_owl_handle_object_property($owl) {
   // The chado.db.name and chado.dbxref.accession should be in this URL
   // and we can
   $about = $owl->getAttribute('rdf:about');
-  print "$about\n";
+  // print "$about\n";
   
   // If this element is empty then just return.
   if ($owl->isEmptyElement) {
@@ -267,7 +255,7 @@ function tripal_owl_handle_annotation_property($owl) {
   // The chado.db.name and chado.dbxref.accession should be in this URL
   // and we can
   $about = $owl->getAttribute('rdf:about');
-  print "$about\n";
+  // print "$about\n";
   
   // If this element is empty then just return.
   if ($owl->isEmptyElement) {
@@ -293,7 +281,7 @@ function tripal_owl_handle_annotation_property($owl) {
         case 'rdfs:label':
           $owl->read();
           $value = $owl->value;
-          print "$name\t$value\n";
+          // print "$name\t$value\n";
           
           // Goes to chado.cvterm.name
           break;
@@ -305,13 +293,13 @@ function tripal_owl_handle_annotation_property($owl) {
         case 'rdfs:subPropertyOf':
           if ($owl->isEmptyElement) {
             $resource = $owl->getAttribute('rdf:resource');
-            print $resource . "\n";
+            // print $resource . "\n";
           }
           break;
         case 'rdfs:comment':
           $owl->read();
           $value = $owl->value;
-          print "$name\t$value\n";
+          // print "$name\t$value\n";
           break;
         // case (preg_match('/^oboInOwl:(.*)$/', $name, $matches) ? TRUE : FALSE):
         // create a function to read in the OboInOwl tags.
@@ -328,7 +316,7 @@ function tripal_owl_handle_annotation_property($owl) {
             $vocab = $matches[1];
             $owl->read();
             $value = $owl->value;
-            print "$name\t$value\n";
+            // print "$name\t$value\n";
             $accession = $matches[2];
           }
           else {
@@ -355,7 +343,7 @@ function tripal_owl_handle_description($owl) {
   // The chado.db.name and chado.dbxref.accession should be in this URL
   // and we can
   $about = $owl->getAttribute('rdf:about');
-  print "$about\n";
+  // print "$about\n";
   
   // If this element is empty then just return.
   if ($owl->isEmptyElement) {
@@ -385,7 +373,7 @@ function tripal_owl_handle_description($owl) {
         case 'rdfs:subPropertyOf':
           if ($owl->isEmptyElement) {
             $resource = $owl->getAttribute('rdf:resource');
-            print $resource . "\n";
+            // print $resource . "\n";
           }
           break;
         case 'rdfs:subClassOf':
@@ -433,37 +421,38 @@ function tripal_owl_handle_class($owl) {
   // The chado.db.name and chado.dbxref.accession should be in this URL
   // and we can
   $about = $owl->getAttribute('rdf:about');
-  print "$about\n";
+  // print "$about\n";
   
   // Insert dbxref API to add new database and accession with the OWl class.
   
-  $matches = array(
-    $dbs[''] = $db_name
-    ['accession'] = $accession
-  );
-  
+  $matches = array();
+  $db_name = '';
+  $accession = '';
   if (preg_match('/.*\/(.+)_(.+)/', $about, $matches)) {
     $db_name = strtoupper($matches[1]);
     $accession = $matches[2];
   }
-  print "CORRECT: '$db_name & $accession'\n";
+  // print "CORRECT: '$db_name & $accession'\n";
   
-  if (!tripal_insert_db(array(
+  $db = array(
     'name' => $db_name
-  ))) {
+  );
+  if (!tripal_insert_db($db)) {
     print "ERROR: '\n";
     exit();
   }
   
-  // $values = array(
-  // 'db_id' => $db_name,
-  // 'accesion' => $accession
-  // );
+  $values['db_id'] = $db;
   
-  // if (!tripal_insert_dbxref($values)) {
-  // print "ERROR: '\n";
-  // exit();
-  // }
+  $values = array(
+    'db_id' => $db_id,
+    'accession' => $accession
+  );
+  
+  if (!tripal_insert_dbxref($values)) {
+    print "ERROR: '\n";
+    exit();
+  }
   
   // If this element is empty then just return.
   if ($owl->isEmptyElement) {
@@ -486,14 +475,14 @@ function tripal_owl_handle_class($owl) {
         case 'rdfs:label':
           $owl->read();
           $value = $owl->value;
-          print "$name\t$value\n";
+          // print "$name\t$value\n";
           
           // Goes to chado.cvterm.name
           break;
         case 'rdfs:subClassOf':
           if ($owl->isEmptyElement) {
             $resource = $owl->getAttribute('rdf:resource');
-            print $resource . "\n";
+            // print $resource . "\n";
           }
           else {
           }
@@ -509,7 +498,7 @@ function tripal_owl_handle_class($owl) {
             $vocab = $matches[1];
             $owl->read();
             $value = $owl->value;
-            print "$name\t$value\n";
+            // print "$name\t$value\n";
             $accession = $matches[2];
           }
           else {
