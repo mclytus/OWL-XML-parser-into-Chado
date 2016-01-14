@@ -11,7 +11,7 @@
  * @param unknown $filename 
  */
 function tripal_cv_parse_owl($filename) {
-   
+  
   // Load the XML file.
   $owl = new XMLReader();
   
@@ -84,7 +84,6 @@ function tripal_owl_handle_namespaces($owl, &$namespaces) {
     }
   }
 }
-
 
 /**
  *
@@ -432,7 +431,7 @@ function tripal_owl_handle_class($owl, &$ontologies) {
   $about = $owl->getAttribute('rdf:about');
   // print "$about\n";
   
-  // Get the DB name and accession from the about attribute.  
+  // Get the DB name and accession from the about attribute.
   $matches = array();
   $db_name = '';
   $accession = '';
@@ -459,7 +458,6 @@ function tripal_owl_handle_class($owl, &$ontologies) {
     $db = $ontologies[$db_name]['db'];
   }
   
-    
   // Insert a dbxref record.
   $values = array(
     'db_id' => $db->db_id,
@@ -473,9 +471,9 @@ function tripal_owl_handle_class($owl, &$ontologies) {
   
   // Check to see if this database has records and if so, what CV it is using.
   // Because the OWL Class doensn't specify a name that Chado wants for the
-  // cv table, we have ti discovery it or add it.  If we find a single record
+  // cv table, we have to discovery it or add it. If we find a single record
   // that has a cvterm (hence associated with a CV) then we'll reuse the same
-  // CV.  Otherwise, we must add a new CV record and we'll use the $db_name
+  // CV. Otherwise, we must add a new CV record and we'll use the $db_name
   // as the name.
   $cv = null;
   if (!$ontologies[$db_name]['cv']) {
@@ -488,7 +486,9 @@ function tripal_owl_handle_class($owl, &$ontologies) {
       WHERE DB.db_id = :db_id
       LIMIT 1 OFFSET 0
     ";
-    $results = chado_query($sql, array(':db_id' => $db->db_id));
+    $results = chado_query($sql, array(
+      ':db_id' => $db->db_id
+    ));
     if (!$results) {
       $cv = tripal_insert_cv($db->name, '');
     }
@@ -501,28 +501,8 @@ function tripal_owl_handle_class($owl, &$ontologies) {
     $cv = $ontologies[$db_name]['cv'];
   }
   
-  
   // Inserting CV term record. IMPORTANT NOTE: The insert cvterm function need to be
-  // fixed to add the db_id to be incorporated into the function. 
-  
-//   $term = array();
-//     $id = '';
-//     $name = '';
-//     $definition = '';
-//     $cv_name = '';
-    
-    
-    // Getting the CV name from the label title in the Class stanza
-    
-    // $cv_name = preg_match('/.*\/(.+)_(.+)/', $term, $matches)
-    
-//     $options = array (
-//       'id' => $accession
-//       'name' => $db_name,
-//       'cv_name' => $cv
-//     );
-
-    // $cvterm = tripal_insert_cvterm($term, $options = array())
+  // fixed to add the db_id to be incorporated into the function.
   
   // If this element is empty then just return.
   if ($owl->isEmptyElement) {
@@ -536,8 +516,23 @@ function tripal_owl_handle_class($owl, &$ontologies) {
   do {
     // If we've reached the end of the Class block then return.
     if ($owl->nodeType == XMLReader::END_ELEMENT and $owl->name == 'owl:Class') {
-      // Insert CVTerm before returning, if we have all the necessary 
+      // Insert CVTerm before returning, if we have all the necessary
       // information.
+      $cvterm = null;
+      
+      $id = $dbxref;
+      $name = $cv;
+      $definition = '';
+      $cv_name = '';
+      
+      $term = array(
+        'id' => $dbxref,
+        'name' => $cv,
+        'cv_name' => $owl->value
+      );
+      
+      $cvterm = tripal_insert_cvterm($term, $options = array());
+      
       return;
     }
     else if ($owl->nodeType == XMLReader::ELEMENT) {
@@ -546,7 +541,7 @@ function tripal_owl_handle_class($owl, &$ontologies) {
       switch ($name) {
         case 'rdfs:label':
           $owl->read();
-          $value = $owl->value;
+          $cv_name = $owl->value;
           // print "$name\t$value\n";
           
           // Goes to chado.cvterm.name
