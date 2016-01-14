@@ -168,6 +168,7 @@ function tripal_owl_handle_header($owl, &$ontologies) {
       
       $ontologies[$db_name]['cv'] = $cv;
       $ontologies[$db_name]['db'] = $db;
+      $ontologies['this'] = $db_name;
       return;
     }
   }
@@ -512,27 +513,33 @@ function tripal_owl_handle_class($owl, &$ontologies) {
   // Move the element pointer to the first element inside of the
   // ObjectProperty stanza.
   $owl->read();
-  
+  $cvterm_name = null;
+  $definition = '';
   do {
     // If we've reached the end of the Class block then return.
     if ($owl->nodeType == XMLReader::END_ELEMENT and $owl->name == 'owl:Class') {
-      // Insert CVTerm before returning, if we have all the necessary
-      // information.
-      $cvterm = null;
-      
-      $id = $dbxref;
-      $name = $cv;
-      $definition = '';
-      $cv_name = '';
-      
+      // Create the term array used for teh tripal_insert_cvterm() function.
       $term = array(
-        'id' => $dbxref,
-        'name' => $cv,
-        'cv_name' => $owl->value
+        'id' => $db->name .':'. $dbxref->accession,
+        'name' => $cvterm_name,
+        'cv_name' => $cv->name,
+        'definition' => $definition,
       );
       
-      $cvterm = tripal_insert_cvterm($term, $options = array());
+      // It is possible to have terms from other vocabularies in the 
+      // the OWL file.  We want to add these terms if they do not exists
+      // because they will have relatioships to terms in this vocabulary.
+      // But, we do not want to overwrite the terms if they belong to
+      // another vocabulary and they already exists.  So, we will
+      // set the $options array not update if the database for the
+      // terms is different from the database for this file.
+      $option =array();
+      if ($ontologies['this'] != $db->name){
+        $option['update_existing'] = FALSE;
+      }
       
+      // Insert the term and return;
+      $cvterm = tripal_insert_cvterm($term, $option);
       return;
     }
     else if ($owl->nodeType == XMLReader::ELEMENT) {
@@ -541,7 +548,7 @@ function tripal_owl_handle_class($owl, &$ontologies) {
       switch ($name) {
         case 'rdfs:label':
           $owl->read();
-          $cv_name = $owl->value;
+          $cvterm_name = $owl->value;
           // print "$name\t$value\n";
           
           // Goes to chado.cvterm.name
@@ -567,6 +574,7 @@ function tripal_owl_handle_class($owl, &$ontologies) {
             $value = $owl->value;
             // print "$name\t$value\n";
             $accession = $matches[2];
+            
           }
           else {
             $vocab = 'OBO';
