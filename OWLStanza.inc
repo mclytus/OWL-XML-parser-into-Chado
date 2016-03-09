@@ -1,10 +1,8 @@
 <?php
-
 /**
  * @file
  * OWL redesign using Classes (Objects)
  */
-
 Class OWLStanza {
   // The XMLReader object.
   private $owl = NULL;
@@ -17,7 +15,6 @@ Class OWLStanza {
   private $attributes = array();
   // An array of OWLStanza objects.
   private $children = array();
-
   /**
    * Implements the constructor.
    *
@@ -30,9 +27,7 @@ Class OWLStanza {
   public function __construct($owl, $parse_children = TRUE) {
     $this->owl = $owl;
     $this->parse_children = $parse_children;
-
   }
-
   /**
    * Gets the children array.
    *
@@ -42,7 +37,6 @@ Class OWLStanza {
   public function getChildren() {
     return $children;
   }
-
   /**
    * Sets the children array.
    *
@@ -52,22 +46,55 @@ Class OWLStanza {
    *   FALSE if the array was not set, TRUE otherwise.
    */
   public function setChildren($children) {
-
     // Makes sure the incoming argument is an array.
     if (!is_array($children)) {
       return FALSE;
     }
-
     // Make sure that all of the array elements are OWLStanza objects.
     foreach ($children as $child) {
       if (get_class($child) != 'OWLStanza') {
         return FALSE;
       }
     }
-
     // All is good, set the children.
     $this->children = $children;
   }
+  
+  /**
+  * Gets the attributes array.
+  *
+  * @return
+  *   An array containing a key/value associative array of all of the attributes.
+  */
+  public function getAttributes() {
+  	return $attributes;
+  }
+  /**
+   * Sets the attributes array.
+   *
+   * @param $attributes
+   *   An array containing a key/value associative array of all of the attributes.
+   * @return
+   *   FALSE if the array was not set, TRUE otherwise.
+   */
+  public function setAttributes($attributes) {
+  	// Makes sure the incoming argument is an array.
+  	if (!is_array($attributes)) {
+  		return FALSE;
+  	}
+  	// Make sure that all of the array are key/values.
+  	foreach ($attributes as $array) {
+  		if (get_class($array) != 'OWLStanza') {
+  			return FALSE;
+  		}
+  	}
+  	// All is good, set the attributes.
+  	$this->attributes = $attributes;
+  }
+  
+  
+  
+  
+  
+  
 }
-
-
