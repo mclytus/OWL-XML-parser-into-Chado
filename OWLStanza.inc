@@ -59,25 +59,24 @@ Class OWLStanza {
     // All is good, set the children.
     $this->children = $children;
   }
-  
+
   /**
    * Gets the child($tag_name) array.
    *
    * @return
-   *   An array of OWLStanza objects containing the child element tag name.
+   *   An array of OWLStanza objects containing the child element tag name.  I
+   *   the child cannot found then NULL is returned.
    */
   public function getChild($tag_name) {
-  	while ($owl->read()) {
-  		if ($owl->nodeType == XMLReader::ELEMENT) {
-  			$child = new OWLStanza($owl);
-  			$child->parse();
-  			$children[] = $child;
-  		if ($owl->nodeType == XMLReader::END_ELEMENT and $owl->name == $this->tag_name) {
-  	return $child;
-  	}
+    foreach ($this->children as $child) {
+      if ($child->getTagName() == $tag_name) {
+        return $child;
+      }
+    }
+    return NULL;
   }
-  
-  
+
+
   /**
    * Gets the tag name.
    *
@@ -98,8 +97,8 @@ Class OWLStanza {
   public function setTagName($tag_name) {
   	return;
   }
-  
-  
+
+
   /**
   * Gets the attributes array.
   *
@@ -108,6 +107,10 @@ Class OWLStanza {
   */
   public function getAttributes() {
   	return $attributes;
+  }
+
+  public function getAttribute($attribute_name) {
+
   }
   /**
    * Sets the attributes array.
@@ -131,10 +134,10 @@ Class OWLStanza {
   	// All is good, set the attributes.
   	$this->attributes = $attributes;
   }
-  
-  
-  
-  
-  
-  
+
+
+
+
+
+
 }
