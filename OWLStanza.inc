@@ -61,10 +61,50 @@ Class OWLStanza {
   }
   
   /**
+   * Gets the child($tag_name) array.
+   *
+   * @return
+   *   An array of OWLStanza objects containing the child element tag name.
+   */
+  public function getChild($tag_name) {
+  	while ($owl->read()) {
+  		if ($owl->nodeType == XMLReader::ELEMENT) {
+  			$child = new OWLStanza($owl);
+  			$child->parse();
+  			$children[] = $child;
+  		if ($owl->nodeType == XMLReader::END_ELEMENT and $owl->name == $this->tag_name) {
+  	return $child;
+  	}
+  }
+  
+  
+  /**
+   * Gets the tag name.
+   *
+   * @return
+   *   An XML element tag name (e.g. ‘owl:ObjectProperty’,‘owl:AnnotationProperty’).
+   */
+  public function getTagName() {
+  	return $tag_name;
+  }
+  /**
+   * Sets the tag name.
+   *
+   * @param $tag_name
+   *   An array containing a key/value associative array of all of the attributes.
+   * @return
+   *   FALSE if the array was not set, TRUE otherwise.
+   */
+  public function setTagName($tag_name) {
+  	return;
+  }
+  
+  
+  /**
   * Gets the attributes array.
   *
   * @return
-  *   An array containing a key/value associative array of all of the attributes.
+  *   An array containing a key/value associative array of all of the attributes between the XML elements tag name.
   */
   public function getAttributes() {
   	return $attributes;
