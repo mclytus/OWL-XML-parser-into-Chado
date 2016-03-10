@@ -116,8 +116,8 @@ ff	 * @param $parse_children
 			return FALSE;
 		}
 		// Make sure that all of the array are key/values.
-		foreach ( $attributes as $key => $value ) {
-			if (get_class ( $value) != 'OWLStanza') {
+		foreach ( $attributes as $attribute_name ) {
+			if (get_class ($attribute_name) != 'OWLStanza') {
 				return FALSE;
 			}
 		}
@@ -131,8 +131,8 @@ ff	 * @param $parse_children
 	 * @return An|NULL
 	 */
 	public function getAttribute($attribute_name) {
-		foreach ( $this->attributes as $attribute_name ) {
-			if ($attribute_name->getAttributes () == $attributes) {
+		foreach ($this->attributes as $attribute_name ) {
+			if ($attribute_name->getAttributes() == $attributes) {
 				return $attribute_name;
 			}
 		}
