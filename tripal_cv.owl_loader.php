@@ -27,9 +27,10 @@ function tripal_cv_parse_owl($filename) {
 
   $rdf = new OWLStanza($owl, FALSE);
   print_r ($rdf);
-
-
-
+  
+  $ontology = new OWLStanza($owl,FALSE);
+  print_r($ontology);
+  
   return;
 
   // Holds all of the namespaces used by this OWL file.
@@ -50,15 +51,15 @@ function tripal_cv_parse_owl($filename) {
         case 'owl:Ontology':
           tripal_owl_handle_header($owl, $ontologies);
           break;
-        // case 'owl:AnnotationProperty':
-        // tripal_owl_handle_annotation_property($owl);
-        // break;
-        // case 'rdf:Description':
-        // tripal_owl_handle_description($owl);
-        // break;
-        // case 'owl:ObjectProperty':
-        // tripal_owl_handle_object_property($owl);
-        // break;
+        case 'owl:AnnotationProperty':
+        tripal_owl_handle_annotation_property($owl);
+        break;
+        case 'rdf:Description':
+        tripal_owl_handle_description($owl);
+        break;
+        case 'owl:ObjectProperty':
+        tripal_owl_handle_object_property($owl);
+        break;
         case 'owl:Class':
           tripal_owl_handle_class($owl, $ontologies);
           break;
@@ -77,10 +78,10 @@ function tripal_cv_parse_owl($filename) {
 /**
  * Retreives the namespaces from the OWL rdf:RDF tag.
  *
- * @param $owl The
- * XML reader object.
- * @param $namespaces An
- * empty array into which the namespaces will be written
+ * @param $owl 
+ * The XML reader object.
+ * @param $namespaces
+ * An empty array into which the namespaces will be written
  *
  * @return no return value.
  */

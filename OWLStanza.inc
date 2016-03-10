@@ -15,14 +15,13 @@ class OWLStanza {
 	private $attributes = array ();
 	// An array of OWLStanza objects.
 	private $children = array ();
+	
 	/**
 	 * Implements the constructor.
 	 *
-	 * @param $owl The
-	 *        	XMLReader object.
-	 * @param $parse_children A
-	 *        	boolean (TRUE or FALSE) indicating if children should be parsed. if
-	 *        	FALSE only attributes will be parse.
+ff	 * @param $parse_children
+	 * A boolean (TRUE or FALSE) indicating if children should be parsed. 
+	 * If FALSE only attributes will be parse.
 	 */
 	public function __construct($owl, $parse_children = TRUE) {
 		$this->owl = $owl;
@@ -61,8 +60,8 @@ class OWLStanza {
 	/**
 	 * Gets the child($tag_name) array.
 	 *
-	 * @return An array of OWLStanza objects containing the child element tag name. In
-	 *         the child cannot found then NULL is returned.
+	 * @return An array of OWLStanza objects containing the child element tag name.
+	 *  If the child cannot found then NULL is returned.
 	 */
 	public function getChild($tag_name) {
 		foreach ( $this->children as $child ) {
@@ -90,13 +89,15 @@ class OWLStanza {
 	 * @return value element tag name.
 	 */
 	public function setTagName($tag_name) {
+		$this->tag_name = $tag_name;
 		return;
 	}
 	
 	/**
 	 * Gets the attributes array.
 	 *
-	 * @return An array containing a key/value associative array of all of the attributes between the XML elements tag name.
+	 * @return An array containing a key/value associative array 
+	 * of all of the attributes between the XML elements tag name.
 	 */
 	public function getAttributes() {
 		return $attributes;
@@ -115,8 +116,8 @@ class OWLStanza {
 			return FALSE;
 		}
 		// Make sure that all of the array are key/values.
-		foreach ( $attributes as $key ) {
-			if (get_class ( $key ) != 'OWLStanza') {
+		foreach ( $attributes as $key => $value ) {
+			if (get_class ( $value) != 'OWLStanza') {
 				return FALSE;
 			}
 		}
