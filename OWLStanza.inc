@@ -35,19 +35,43 @@ class OWLStanza {
    * This function is to parse each of the OWL Stanzas of the ro.owl file.
    */
   
+  
+  
+  
   	private function parse($rdf) {
-  	foreach ($rdf as $tag_name) {
-  		if (get_class($tag_name)){
-  	
-  		$this->tag_name = $owl->name;
-  	
+  			if ($tag_name->nodeType == XMLReader::ELEMENT) {
+  			
+  			// Deal with each section of OWL.
+  			switch ($owl->name) {
+  				case 'rdf:RDF':
+  					tripal_owl_handle_namespaces($owl, $namespaces);
+  					print_r($namespaces);
+  				
+//   				case 'owl:Ontology':
+//   					tripal_owl_handle_header($owl, $ontologies);
+//   					break;
+//   				case 'owl:AnnotationProperty':
+//   					tripal_owl_handle_annotation_property($owl);
+//   					break;
+//   				case 'rdf:Description':
+//   					tripal_owl_handle_description($owl);
+//   					break;
+//   				case 'owl:ObjectProperty':
+//   					tripal_owl_handle_object_property($owl);
+//   					break;
+//   				case 'owl:Class':
+//   					tripal_owl_handle_class($owl, $ontologies);
+//   					break;
+//   				default:
+
   	return;
+  	$this->tag_name = $owl->name;
+  			
+  			print "Unhandled stanza: " . $owl->name . "\n";
   			}
   		}
   	}
   	
-
-  
   
   
   /**
