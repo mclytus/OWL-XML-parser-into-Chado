@@ -15,6 +15,8 @@ class OWLStanza {
   private $attributes = array ();
   // An array of OWLStanza objects.
   private $children = array ();
+  // The text value of a XML element.
+  private $value;
   
   /**
    * Implements the constructor.
@@ -34,38 +36,38 @@ class OWLStanza {
    * @param private  
    * This function is to parse each of the OWL Stanzas of the ro.owl file.
    */
-  	private function parse($rdf) {
-  		
-  		while ($owl->nodeType != XMLReader::ELEMENT) {
-  			$owl->read();
-  		}
-  		$this->tag_name = $owl->name;
-  		 
-  		while ($owl->read());
-  		
-  	$about = $owl->getAttribute('rdf:about');
-  	if (preg_match('/^.*\/(.*)\.owl.*$/', $about, $matches)) {
-  		$db_name = strtoupper($matches[0]);
-  		$this->attributes[$owl->name] = $db_name;
+  	private function parse() {
+  		// Get the tag name.
+  	while ($this->owl->read()) {
+  		if ($this->owl->nodeType == XMLReader::ELEMENT and $this->owl->name == 'rdf:RDF') {
   	}
-  	if ($owl->isEmptyElement) {
-  		return;
+  	return $this->tag_name = $this->owl->name;
+  		}
+  	
+  	// Get the attributes.
+  	$num_attrs = $this->owl->attributeCount;
+  	if ($this->owl->moveToFirstAttribute() and $this->owl->getAttributes == array());
+  	for ($i = 0; $i < $num_attrs; $i++) {
+  			$this->owl->moveToNextAttribute();
+  			$this->owl->value;
+  			}
+  	return $this->attributes;
+  	
+  	// check to see if the node has a value. if so, get it
+  	if ($this->value->nodeType) {
+  		
   	}
   	
-  	if ($parse_children == TRUE)
-  		while ($owl->read()) {
-  		if ($owl->nodeType == XMLReader::ELEMENT) {
-  			$child = new OWLStanza($owl);
-  			$children[] = $child;
-  			if ($owl->nodeType == XMLReader::END_ELEMENT and $owl->name == $this->tag_name)
-			return;
-				else
-			return;
-  
-  		}
+  	
+  	
+  	
   	}
- 	}
-  
+  	
+  	
+  	
+  	
+  	
+  	
   
   /**
    * Gets the children array.
