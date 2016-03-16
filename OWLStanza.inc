@@ -36,41 +36,41 @@ class OWLStanza {
    */
   
   
-  
-  
   	private function parse($rdf) {
-  			if ($tag_name->nodeType == XMLReader::ELEMENT) {
+  		
+  		$ontologies = array();
+  		
+  		do {
+  			if ($owl->nodeType == XMLReader::ELEMENT) {
   			
   			// Deal with each section of OWL.
   			switch ($owl->name) {
   				case 'rdf:RDF':
   					tripal_owl_handle_namespaces($owl, $namespaces);
   					print_r($namespaces);
-  				
-//   				case 'owl:Ontology':
-//   					tripal_owl_handle_header($owl, $ontologies);
-//   					break;
-//   				case 'owl:AnnotationProperty':
-//   					tripal_owl_handle_annotation_property($owl);
-//   					break;
-//   				case 'rdf:Description':
-//   					tripal_owl_handle_description($owl);
-//   					break;
-//   				case 'owl:ObjectProperty':
-//   					tripal_owl_handle_object_property($owl);
-//   					break;
-//   				case 'owl:Class':
-//   					tripal_owl_handle_class($owl, $ontologies);
-//   					break;
-//   				default:
-
-  	return;
-  	$this->tag_name = $owl->name;
-  			
-  			print "Unhandled stanza: " . $owl->name . "\n";
+  					break;
+  				case 'owl:Ontology':
+  					tripal_owl_handle_header($owl, $ontologies);
+  					break;
+  				case 'owl:AnnotationProperty':
+  					tripal_owl_handle_annotation_property($owl);
+  					break;
+  				case 'rdf:Description':
+  					tripal_owl_handle_description($owl);
+  					break;
+  				case 'owl:ObjectProperty':
+  					tripal_owl_handle_object_property($owl);
+  					break;
+  				case 'owl:Class':
+  					tripal_owl_handle_class($owl, $ontologies);
+  					break;
+  				default:
+  					// print "Unhandled stanza: " . $owl->name . "\n";
+  					$owl->next();
+  					}
+  				}
   			}
   		}
-  	}
   	
   
   
