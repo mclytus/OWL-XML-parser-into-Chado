@@ -48,7 +48,6 @@ class OWLStanza {
   		$db_name = strtoupper($matches[0]);
   		$this->attributes[$owl->name] = $db_name;
   	}
-  	
   	if ($owl->isEmptyElement) {
   		return;
   	}
