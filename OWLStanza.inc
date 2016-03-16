@@ -46,23 +46,16 @@ class OWLStanza {
   			// Deal with each section of OWL.
   			switch ($owl->name) {
   				case 'rdf:RDF':
-  					tripal_owl_handle_namespaces($owl, $namespaces);
-  					print_r($namespaces);
   					break;
   				case 'owl:Ontology':
-  					tripal_owl_handle_header($owl, $ontologies);
   					break;
   				case 'owl:AnnotationProperty':
-  					tripal_owl_handle_annotation_property($owl);
   					break;
   				case 'rdf:Description':
-  					tripal_owl_handle_description($owl);
   					break;
   				case 'owl:ObjectProperty':
-  					tripal_owl_handle_object_property($owl);
   					break;
   				case 'owl:Class':
-  					tripal_owl_handle_class($owl, $ontologies);
   					break;
   				default:
   					// print "Unhandled stanza: " . $owl->name . "\n";
@@ -70,7 +63,11 @@ class OWLStanza {
   					}
   				}
   			}
-  		}
+  	while ($owl->read());
+  	$owl->close();
+  	}
+  	
+  	
   	
   
   
