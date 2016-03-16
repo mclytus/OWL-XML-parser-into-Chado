@@ -28,8 +28,27 @@ function tripal_cv_parse_owl($filename) {
   $rdf = new OWLStanza($owl, FALSE);
   print_r ($rdf);
   
-  $ontology = new OWLStanza($owl,FALSE);
+  $ontology = new OWLStanza($owl);
   print_r($ontology);
+  
+  if ($owl->nodeType == XMLReader::END_ELEMENT and $owl->name == 'rdf:RDF') { 
+    $stanza = = new OWLStanza($owl);
+    switch ($stanza->getTagName()) {
+      case 'owl:AnnotationProperty':
+        tripal_owl_handle_annotation_property($stanza);
+        break;
+      case 'rdf:Description':
+        tripal_owl_handle_description($stanza);
+        break;
+      case 'owl:ObjectProperty':
+        tripal_owl_handle_object_property($stanza);
+        break;
+      case 'owl:Class':
+        tripal_owl_handle_class($stanza, $ontology);
+        break;
+      default:
+    }
+  }
   
   return;
 
