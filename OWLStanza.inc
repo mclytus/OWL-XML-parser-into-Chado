@@ -26,7 +26,7 @@ class OWLStanza {
   public function __construct($owl, $parse_children = TRUE) {
     $this->owl = $owl;
     $this->parse_children = $parse_children;
-    $this->parse($owl);
+    $this->parse();
   }
   
   /**
