@@ -38,8 +38,6 @@ class OWLStanza {
   
   	private function parse($rdf) {
   		
-  		$ontologies = array();
-  		
   		do {
   			if ($owl->nodeType == XMLReader::ELEMENT) {
   			
