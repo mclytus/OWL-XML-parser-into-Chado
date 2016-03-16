@@ -36,36 +36,13 @@ class OWLStanza {
    */
   	private function parse($rdf) {
   		
-  		$matches =array();
-  		$db_name = '';
-  		$about = '';
+  		while ($owl->nodeType != XMLReader::ELEMENT) {
+  			$owl->read();
+  		}
+  		$this->tag_name = $owl->name;
+  		  		
+  		while ($owl->read());
   		
-  		do {
-  			if ($owl->nodeType == XMLReader::ELEMENT) {
-  			
-  			// Deal with each section of OWL.
-  			switch ($owl->name) {
-  				case 'rdf:RDF':
-  					break;
-  				case 'owl:Ontology':
-  					break;
-  				case 'owl:AnnotationProperty':
-  					break;
-  				case 'rdf:Description':
-  					break;
-  				case 'owl:ObjectProperty':
-  					break;
-  				case 'owl:Class':
-  					break;
-  				default:
-  					// print "Unhandled stanza: " . $owl->name . "\n";
-  					$owl->next();
-  					}
-  				}
-  			}
-  	while ($owl->read());
-  	$owl->close();
-  	
   	$about = $owl->getAttribute('rdf:about');
   	if (preg_match('/^.*\/(.*)\.owl.*$/', $about, $matches)) {
   		$db_name = strtoupper($matches[0]);
@@ -76,10 +53,19 @@ class OWLStanza {
   		return;
   	}
   	
-  	
-  	
-  	
+  	if ($parse_children == TRUE)
+  		while ($owl->read()) {
+  		if ($owl->nodeType == XMLReader::ELEMENT) {
+  			$child = new OWLStanza($owl);
+  			$children[] = $child;
+  			if ($owl->nodeType == XMLReader::END_ELEMENT and $owl->name == $this->tag_name)
+			return;
+				else
+			return;
+  
+  		}
   	}
+ 	}
   
   
   /**
