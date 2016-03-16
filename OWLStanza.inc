@@ -34,9 +34,11 @@ class OWLStanza {
    * @param private  
    * This function is to parse each of the OWL Stanzas of the ro.owl file.
    */
-  
-  
   	private function parse($rdf) {
+  		
+  		$matches =array();
+  		$db_name = '';
+  		$about = '';
   		
   		do {
   			if ($owl->nodeType == XMLReader::ELEMENT) {
@@ -63,10 +65,21 @@ class OWLStanza {
   			}
   	while ($owl->read());
   	$owl->close();
+  	
+  	$about = $owl->getAttribute('rdf:about');
+  	if (preg_match('/^.*\/(.*)\.owl.*$/', $about, $matches)) {
+  		$db_name = strtoupper($matches[0]);
+  		$this->attributes[$owl->name] = $db_name;
+  	}
+  	
+  	if ($owl->isEmptyElement) {
+  		return;
   	}
   	
   	
   	
+  	
+  	}
   
   
   /**
