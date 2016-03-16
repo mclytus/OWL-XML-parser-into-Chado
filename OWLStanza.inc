@@ -40,7 +40,7 @@ class OWLStanza {
   			$owl->read();
   		}
   		$this->tag_name = $owl->name;
-  		  		
+  		 
   		while ($owl->read());
   		
   	$about = $owl->getAttribute('rdf:about');
