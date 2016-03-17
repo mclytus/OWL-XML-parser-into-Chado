@@ -38,6 +38,7 @@ class OWLStanza {
    * @param private  
    * This function is to parse each of the OWL Stanzas of the ro.owl file.
    */
+<<<<<<< HEAD
   	private function parse() {
   		// Get the tag name.
   		while ($this->owl->read())
@@ -84,6 +85,20 @@ class OWLStanza {
   	
   	
   	
+=======
+  private function parse() {
+    // Step1:  Get the tag name.
+    $this->tag_name = $owl->name;
+    
+    // Step 2:  Get the attributes
+
+    // Step 3: Check to see if the node has a value. If so, get it.
+
+    // Step 4:  Loop over the children
+  
+  }
+  
+>>>>>>> 4fc4abb5768922bb645d33d8f69df1be3a6bf478
   
   /**
    * Gets the children array.
