@@ -4,30 +4,62 @@
  * @add file from header
  */
 
-// tripal_cv_parse_owl('ro.owl');
+require_once('OWLStanza.inc');
+
+
+tripal_cv_parse_owl('ro.owl');
 
 /**
  *
- * @param unknown $filename 
+ * @param unknown $filename
  */
+
 function tripal_cv_parse_owl($filename) {
-  
+
   // Load the XML file.
   $owl = new XMLReader();
-  
+
   // Open the OWL file for parsing.
   if (!$owl->open($filename)) {
     print "ERROR opening OWL file: '$filename'\n";
     exit();
   }
+
+  $rdf = new OWLStanza($owl, FALSE);
+  print_r ($rdf);
   
+  $ontology = new OWLStanza($owl);
+  print_r($ontology);
+  
+
+  if ($owl->nodeType == XMLReader::END_ELEMENT and $owl->name == 'rdf:RDF') {
+  	$stanza =  new OWLStanza($owl);
+  	switch ($stanza->getTagName()) {
+  		case 'owl:AnnotationProperty':
+  			tripal_owl_handle_annotation_property($stanza);
+  			break;
+  		case 'rdf:Description':
+  			tripal_owl_handle_description($stanza);
+  			break;
+  		case 'owl:ObjectProperty':
+  			tripal_owl_handle_object_property($stanza);
+  			break;
+  		case 'owl:Class':
+  			tripal_owl_handle_class($stanza, $ontology);
+  			break;
+  		default:
+  	}
+  }
+    
+return;
+
   // Holds all of the namespaces used by this OWL file.
   $namespaces = array();
-  
+
   // Holds an array of CV and DB records that have already been
   // inserted (reduces number of queires).
   $ontologies = array();
-  
+
   do {
     if ($owl->nodeType == XMLReader::ELEMENT) {
       // Deal with each section of OWL.
@@ -39,15 +71,15 @@ function tripal_cv_parse_owl($filename) {
         case 'owl:Ontology':
           tripal_owl_handle_header($owl, $ontologies);
           break;
-        // case 'owl:AnnotationProperty':
-        // tripal_owl_handle_annotation_property($owl);
-        // break;
-        // case 'rdf:Description':
-        // tripal_owl_handle_description($owl);
-        // break;
-        // case 'owl:ObjectProperty':
-        // tripal_owl_handle_object_property($owl);
-        // break;
+        case 'owl:AnnotationProperty':
+        tripal_owl_handle_annotation_property($owl);
+        break;
+        case 'rdf:Description':
+        tripal_owl_handle_description($owl);
+        break;
+        case 'owl:ObjectProperty':
+        tripal_owl_handle_object_property($owl);
+        break;
         case 'owl:Class':
           tripal_owl_handle_class($owl, $ontologies);
           break;
@@ -58,7 +90,7 @@ function tripal_cv_parse_owl($filename) {
     }
   }
   while ($owl->read());
-  
+
   // Close the XMLReader file object.
   $owl->close();
 }
@@ -66,11 +98,11 @@ function tripal_cv_parse_owl($filename) {
 /**
  * Retreives the namespaces from the OWL rdf:RDF tag.
  *
- * @param $owl The
- * XML reader object.
- * @param $namespaces An
- * empty array into which the namespaces will be written
- * 
+ * @param $owl 
+ * The XML reader object.
+ * @param $namespaces
+ * An empty array into which the namespaces will be written
+ *
  * @return no return value.
  */
 function tripal_owl_handle_namespaces($owl, &$namespaces) {
@@ -96,7 +128,7 @@ function tripal_owl_handle_header($owl, &$ontologies) {
   $homepage = '';
   $db_name = '';
   $matches = array();
-  
+
   // The about attribute contains the URL for the resource of this
   // OWL file. We will use the name of the OWL file as the
   // chado.db.name field.
@@ -108,7 +140,7 @@ function tripal_owl_handle_header($owl, &$ontologies) {
     print "ERROR: count not find the database name\n";
     exit();
   }
-  
+
   // Itereate through the XML elements to find the header tags that we
   // will support.
   while ($owl->read()) {
@@ -147,7 +179,7 @@ function tripal_owl_handle_header($owl, &$ontologies) {
       // print "Description: $description\n";
       // print "Homepage: $homepage\n";
       // print "Resource: $resource\n";
-      
+
       // Create the CV and DB records here.
       $cv_name = preg_replace("/[^\w]/", "_", strtolower($title));
       $cv = tripal_insert_cv($cv_name, $description);
@@ -155,7 +187,7 @@ function tripal_owl_handle_header($owl, &$ontologies) {
         print "ERROR: '\n";
         exit();
       }
-      
+
       $db = array(
         'url' => $homepage,
         'name' => $db_name
@@ -165,7 +197,7 @@ function tripal_owl_handle_header($owl, &$ontologies) {
         print "ERROR: '\n";
         exit();
       }
-      
+
       $ontologies[$db_name]['cv'] = $cv;
       $ontologies[$db_name]['db'] = $db;
       $ontologies['this'] = $db_name;
@@ -185,16 +217,16 @@ function tripal_owl_handle_object_property($owl) {
   // and we can
   $about = $owl->getAttribute('rdf:about');
   // print "$about\n";
-  
+
   // If this element is empty then just return.
   if ($owl->isEmptyElement) {
     return;
   }
-  
+
   // Move the element pointer to the first element inside of the
   // ObjectProperty stanza.
   $owl->read();
-  
+
   // Itereate through the XML elements to find the header tags that we
   // will support.
   do {
@@ -265,16 +297,16 @@ function tripal_owl_handle_annotation_property($owl) {
   // and we can
   $about = $owl->getAttribute('rdf:about');
   // print "$about\n";
-  
+
   // If this element is empty then just return.
   if ($owl->isEmptyElement) {
     return;
   }
-  
+
   // Move the element pointer to the first element inside of the
   // AnnotationProperty stanza.
   $owl->read();
-  
+
   // Itereate through the XML elements to find the header tags that we
   // will support.
   do {
@@ -284,14 +316,14 @@ function tripal_owl_handle_annotation_property($owl) {
     }
     else if ($owl->nodeType == XMLReader::ELEMENT) {
       $matches = array();
-      
+
       $name = $owl->name;
       switch ($name) {
         case 'rdfs:label':
           $owl->read();
           $value = $owl->value;
           // print "$name\t$value\n";
-          
+
           // Goes to chado.cvterm.name
           break;
         case 'rdfs:seeAlso':
@@ -353,16 +385,16 @@ function tripal_owl_handle_description($owl) {
   // and we can
   $about = $owl->getAttribute('rdf:about');
   // print "$about\n";
-  
+
   // If this element is empty then just return.
   if ($owl->isEmptyElement) {
     return;
   }
-  
+
   // Move the element pointer to the first element inside of the
   // Description stanza.
   $owl->read();
-  
+
   do {
     // If we've reached the end of the description block then return.
     if ($owl->nodeType == XMLReader::END_ELEMENT and $owl->name == 'rdf:Description') {
@@ -376,7 +408,7 @@ function tripal_owl_handle_description($owl) {
           $owl->read();
           $value = $owl->value;
           print "$name\t$value\n";
-          
+
           // Goes to chado.cvterm.name
           break;
         case 'rdfs:subPropertyOf':
@@ -387,7 +419,7 @@ function tripal_owl_handle_description($owl) {
           break;
         case 'rdfs:subClassOf':
           break;
-        
+
         case (preg_match('/^oboInOwl:(.*)$/', $name, $matches) ? TRUE : FALSE):
           // create a function to read in the OboInOwl tags.
           $accession = $matches[1];
@@ -431,7 +463,7 @@ function tripal_owl_handle_class($owl, &$ontologies) {
   // and we can
   $about = $owl->getAttribute('rdf:about');
   // print "$about\n";
-  
+
   // Get the DB name and accession from the about attribute.
   $matches = array();
   $db_name = '';
@@ -440,7 +472,7 @@ function tripal_owl_handle_class($owl, &$ontologies) {
     $db_name = strtoupper($matches[1]);
     $accession = $matches[2];
   }
-  
+
   // Insert a DB record.
   $db = null;
   if (!array_key_exists($db_name, $ontologies)) {
@@ -458,7 +490,7 @@ function tripal_owl_handle_class($owl, &$ontologies) {
   else {
     $db = $ontologies[$db_name]['db'];
   }
-  
+
   // Insert a dbxref record.
   $values = array(
     'db_id' => $db->db_id,
@@ -469,7 +501,7 @@ function tripal_owl_handle_class($owl, &$ontologies) {
     print "ERROR: '\n";
     exit();
   }
-  
+
   // Check to see if this database has records and if so, what CV it is using.
   // Because the OWL Class doensn't specify a name that Chado wants for the
   // cv table, we have to discovery it or add it. If we find a single record
@@ -501,15 +533,15 @@ function tripal_owl_handle_class($owl, &$ontologies) {
   else {
     $cv = $ontologies[$db_name]['cv'];
   }
-  
+
   // Inserting CV term record. IMPORTANT NOTE: The insert cvterm function need to be
   // fixed to add the db_id to be incorporated into the function.
-  
+
   // If this element is empty then just return.
   if ($owl->isEmptyElement) {
     return;
   }
-  
+
   // Move the element pointer to the first element inside of the
   // ObjectProperty stanza.
   $owl->read();
@@ -525,8 +557,8 @@ function tripal_owl_handle_class($owl, &$ontologies) {
         'cv_name' => $cv->name,
         'definition' => $definition,
       );
-      
-      // It is possible to have terms from other vocabularies in the 
+
+      // It is possible to have terms from other vocabularies in the
       // the OWL file.  We want to add these terms if they do not exists
       // because they will have relatioships to terms in this vocabulary.
       // But, we do not want to overwrite the terms if they belong to
@@ -537,7 +569,7 @@ function tripal_owl_handle_class($owl, &$ontologies) {
       if ($ontologies['this'] != $db->name){
         $option['update_existing'] = FALSE;
       }
-      
+
       // Insert the term and return;
       $cvterm = tripal_insert_cvterm($term, $option);
       return;
@@ -550,7 +582,7 @@ function tripal_owl_handle_class($owl, &$ontologies) {
           $owl->read();
           $cvterm_name = $owl->value;
           // print "$name\t$value\n";
-          
+
           // Goes to chado.cvterm.name
           break;
         case 'rdfs:subClassOf':
@@ -574,7 +606,7 @@ function tripal_owl_handle_class($owl, &$ontologies) {
             $value = $owl->value;
             // print "$name\t$value\n";
             $accession = $matches[2];
-            
+
           }
           else {
             $vocab = 'OBO';
