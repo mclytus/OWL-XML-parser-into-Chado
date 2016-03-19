@@ -84,7 +84,16 @@ class OWLStanza {
       }
     }
 
-
+/*
+ *
+ *
+ */
+    /*public static function get_next($owl) {
+    	while ($owl->nodeType != XMLReader::ELEMENT) {
+    		if (!$owl->read()) return NULL;
+    	}
+    	return new OWLStanza();
+    }*/
    /**
     * Get the Value
     *
@@ -92,7 +101,7 @@ class OWLStanza {
     */
 
     public function getValue() {
-      return $value;
+      return $this->value;
     }
 
   /**
@@ -101,7 +110,7 @@ class OWLStanza {
    * @return An array of OWLStanza objects containing the children elements.
    */
   public function getChildren() {
-    return $children;
+    return $this->children;
   }
   /**
    * Sets the children array.
@@ -167,7 +176,7 @@ class OWLStanza {
    *         of all of the attributes between the XML elements tag name.
    */
   public function getAttributes() {
-    return $attributes;
+    return $this->attributes;
   }
 
   /**

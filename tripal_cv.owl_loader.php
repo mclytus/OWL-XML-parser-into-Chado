@@ -6,7 +6,6 @@
 
 require_once('OWLStanza.inc');
 
-
 tripal_cv_parse_owl('ro.owl');
 
 /**
@@ -25,26 +24,89 @@ function tripal_cv_parse_owl($filename) {
     exit();
   }
 
-  $rdf = new OWLStanza($owl, FALSE);
-  print_r ($rdf);
+  $rdf = new OWLStanza($owl);
+  //print_r ($rdf);
 
-  $ontology = new OWLStanza($owl);
-  print_r($ontology);
+  $ontology = NULL;
+  foreach ($rdf->getChildren() as $child)
+  {
+  	if ($child->getTagName() == 'owl:Ontology')
+  	{
+  		$ontology = $child;
+  		break;
+  	}
+  }
+  //$ontology = new OWLStanza($owl);
+  //print_r($ontology);
 
-  while ($owl->nodeType == XMLReader::END_ELEMENT and $owl->name == 'rdf:RDF') {
-  	$stanza =  new OWLStanza($owl);
-  	switch ($stanza->getTagName()) {
+
+  $about = $ontology->getAttribute('rdf:about');
+  if (preg_match('/^.*\/(.*)\.owl.*$/', $about, $matches)) {
+  	$db_name = strtoupper($matches[1]);
+  }
+  // print_r("This should be out of the Ontology: ". $db_name. '\n');
+
+  $ontologies = array();
+$homepage = '';
+
+foreach ($ontology->getChildren() as $child)
+	{
+	if ($child->getTagName() == 'foaf:homepage') {
+	$homepage = $child->getAttribute('rdf:datatype');
+
+	}
+	}
+
+
+
+  echo $homepage . " -> " . $db_name . "\n";
+
+
+  $db = array(
+  		'url' => $homepage,
+  		'name' => $db_name
+  );
+	// $db = tripal_insert_db($db);
+	$title = '';
+	foreach ($ontology->getChildren() as $child)
+	{
+		if ($child->getTagName() == 'dc:title') {
+			$title = $child->getValue();
+		}
+
+	}
+	echo $title . "\n";
+
+
+	$cv_name = strtolower($title);
+foreach ($ontology->getChildren() as $child)
+{
+	if ($child->getTagName() == 'dc:description') {
+		$description = $child->getValue();
+	}
+}
+	echo $description . "\n";
+
+	// $cv = tripal_insert_cv($cv_name, $description);
+
+exit;
+
+  foreach ($rdf->getChildren() as $stanza) {
+
+    	switch ($stanza->getTagName()) {
   		case 'owl:AnnotationProperty':
-  			tripal_owl_handle_annotation_property($stanza);
+  			// tripal_owl_handle_annotation_property($stanza);
+  			//print_r("Unhandled stanza: " . $stanza->getTagName() . "\n");
   			break;
   		case 'rdf:Description':
-  			tripal_owl_handle_description($stanza);
+  			// tripal_owl_handle_description($stanza);
   			break;
   		case 'owl:ObjectProperty':
-  			tripal_owl_handle_object_property($stanza);
+  			// tripal_owl_handle_object_property($stanza);
   			break;
   		case 'owl:Class':
   			tripal_owl_handle_class($stanza, $ontology);
+  			echo $stanza;
   			break;
   		default:
   	}
@@ -69,7 +131,14 @@ function tripal_owl_handle_object_property($stanza) {
  */
 function tripal_owl_handle_annotation_property($stanza) {
 
-}
+	if ($this->owl->nodeType == XMLReader::ELEMENT and $this->owl->name == 'owl:AnnotationProperty') {
+
+	}
+
+
+
+
+
 
 /**
  *
@@ -86,5 +155,20 @@ function tripal_owl_handle_description($stanza) {
  * $owl
  */
 function tripal_owl_handle_class($stanza, $ontology) {
+
+	$about = $stanza->getAttribute('rdf:about');
+	print "$about\n";
+
+	$matches = array();
+	$db_name = '';
+	$accession = '';
+	if (preg_match('/.*\/(.+)_(.+)/', $about, $matches)) {
+		$db_name = strtoupper($matches[1]);
+		$accession = $matches[2];
+	}
+
+}
+
+
 
 }
