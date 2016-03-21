@@ -5,6 +5,7 @@
  */
 
 require_once('OWLStanza.inc');
+//require_once('tripal_cv/api/tripal_cv.api.inc');
 
 tripal_cv_parse_owl('ro.owl');
 
@@ -49,16 +50,11 @@ function tripal_cv_parse_owl($filename) {
   $ontologies = array();
 $homepage = '';
 
-foreach ($ontology->getChildren() as $child)
-	{
+foreach ($ontology->getChildren() as $child) {
 	if ($child->getTagName() == 'foaf:homepage') {
 	$homepage = $child->getAttribute('rdf:datatype');
-
 	}
-	}
-
-
-
+}
   echo $homepage . " -> " . $db_name . "\n";
 
 
@@ -131,9 +127,7 @@ function tripal_owl_handle_object_property($stanza) {
  */
 function tripal_owl_handle_annotation_property($stanza) {
 
-	if ($this->owl->nodeType == XMLReader::ELEMENT and $this->owl->name == 'owl:AnnotationProperty') {
-
-	}
+}
 
 
 
