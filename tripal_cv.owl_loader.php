@@ -25,63 +25,44 @@ function tripal_cv_parse_owl($filename) {
     exit();
   }
 
-  $rdf = new OWLStanza($owl);
+  $rdf = new OWLStanza($owl, FALSE);
   //print_r ($rdf);
 
-  $ontology = NULL;
-  foreach ($rdf->getChildren() as $child)
-  {
-  	if ($child->getTagName() == 'owl:Ontology')
-  	{
-  		$ontology = $child;
-  		break;
-  	}
-  }
-  //$ontology = new OWLStanza($owl);
+  $ontology = new OWLStanza($owl);
   //print_r($ontology);
-
 
   $about = $ontology->getAttribute('rdf:about');
   if (preg_match('/^.*\/(.*)\.owl.*$/', $about, $matches)) {
-  	$db_name = strtoupper($matches[1]);
+    $db_name = strtoupper($matches[1]);
   }
-  // print_r("This should be out of the Ontology: ". $db_name. '\n');
-
-  $ontologies = array();
-$homepage = '';
-
-foreach ($ontology->getChildren() as $child) {
-	if ($child->getTagName() == 'foaf:homepage') {
-	$homepage = $child->getAttribute('rdf:datatype');
-	}
-}
+  $homepage = $ontology->getChild('foaf:homepage');
   echo $homepage . " -> " . $db_name . "\n";
 
-
   $db = array(
-  		'url' => $homepage,
-  		'name' => $db_name
+    'url' => $homepage,
+    'name' => $db_name
   );
-	// $db = tripal_insert_db($db);
-	$title = '';
-	foreach ($ontology->getChildren() as $child)
-	{
-		if ($child->getTagName() == 'dc:title') {
-			$title = $child->getValue();
-		}
+  $db = tripal_insert_db($db);
+  
+//	$title = '';
+//	foreach ($ontology->getChildren() as $child)
+//	{
+//		if ($child->getTagName() == 'dc:title') {
+//			$title = $child->getValue();
+//		}
+//
+//	}
+//	echo $title . "\n";
 
-	}
-	echo $title . "\n";
 
-
-	$cv_name = strtolower($title);
-foreach ($ontology->getChildren() as $child)
-{
-	if ($child->getTagName() == 'dc:description') {
-		$description = $child->getValue();
-	}
-}
-	echo $description . "\n";
+//	$cv_name = strtolower($title);
+//foreach ($ontology->getChildren() as $child)
+//{
+//	if ($child->getTagName() == 'dc:description') {
+//		$description = $child->getValue();
+//	}
+//}
+//	echo $description . "\n";
 
 	// $cv = tripal_insert_cv($cv_name, $description);
 
