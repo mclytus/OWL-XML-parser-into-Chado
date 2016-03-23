@@ -137,8 +137,10 @@ class OWLStanza {
   /**
    * Gets the child($tag_name) array.
    *
-   * @return An array of OWLStanza objects containing the child element tag name.
-   *         If the child cannot found then NULL is returned.
+   * @return
+   *  An OWLStanza object whos tag name matches the tag name provided.
+   *
+   *
    */
   public function getChild($tag_name) {
     foreach ($this->children as $child) {

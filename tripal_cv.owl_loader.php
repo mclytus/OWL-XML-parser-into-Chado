@@ -5,9 +5,6 @@
  */
 
 require_once('OWLStanza.inc');
-//require_once('tripal_cv/api/tripal_cv.api.inc');
-
-tripal_cv_parse_owl('ro.owl');
 
 /**
  *
@@ -26,45 +23,27 @@ function tripal_cv_parse_owl($filename) {
   }
 
   $rdf = new OWLStanza($owl, FALSE);
-  //print_r ($rdf);
 
   $ontology = new OWLStanza($owl);
-  //print_r($ontology);
 
   $about = $ontology->getAttribute('rdf:about');
   if (preg_match('/^.*\/(.*)\.owl.*$/', $about, $matches)) {
     $db_name = strtoupper($matches[1]);
   }
   $homepage = $ontology->getChild('foaf:homepage');
-  echo $homepage . " -> " . $db_name . "\n";
 
   $db = array(
-    'url' => $homepage,
+    'url' => $homepage->getValue(),
     'name' => $db_name
   );
   $db = tripal_insert_db($db);
-  
-//	$title = '';
-//	foreach ($ontology->getChildren() as $child)
-//	{
-//		if ($child->getTagName() == 'dc:title') {
-//			$title = $child->getValue();
-//		}
-//
-//	}
-//	echo $title . "\n";
+
+  $title = $ontology->getChild('dc:title');
+  $description = $ontology->getChild('dc:description');
+  $cv_name = preg_replace("/[^\w]/", "_", strtolower($title->getValue()));
+  $cv = tripal_insert_cv($cv_name, $description->getValue());
 
 
-//	$cv_name = strtolower($title);
-//foreach ($ontology->getChildren() as $child)
-//{
-//	if ($child->getTagName() == 'dc:description') {
-//		$description = $child->getValue();
-//	}
-//}
-//	echo $description . "\n";
-
-	// $cv = tripal_insert_cv($cv_name, $description);
 
 exit;
 
@@ -131,19 +110,9 @@ function tripal_owl_handle_description($stanza) {
  */
 function tripal_owl_handle_class($stanza, $ontology) {
 
-	$about = $stanza->getAttribute('rdf:about');
-	print "$about\n";
-
-	$matches = array();
-	$db_name = '';
-	$accession = '';
-	if (preg_match('/.*\/(.+)_(.+)/', $about, $matches)) {
-		$db_name = strtoupper($matches[1]);
-		$accession = $matches[2];
-	}
 
 }
 
 
 
-}
+
