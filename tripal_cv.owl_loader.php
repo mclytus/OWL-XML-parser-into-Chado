@@ -46,9 +46,8 @@ function tripal_cv_parse_owl($filename) {
 
 
 exit;
-
-  foreach ($rdf->getChildren() as $stanza) {
-
+if ($owl->nodeType == XMLReader::END_ELEMENT and $owl->name == 'rdf:RDF') {
+  	$stanza =  new OWLStanza($owl);
     	switch ($stanza->getTagName()) {
   		case 'owl:AnnotationProperty':
   			// tripal_owl_handle_annotation_property($stanza);
@@ -110,6 +109,10 @@ function tripal_owl_handle_description($stanza) {
  */
 function tripal_owl_handle_class($stanza, $ontology) {
 
+
+$stanza->getChild()) {
+  
+}
 
 }
 
