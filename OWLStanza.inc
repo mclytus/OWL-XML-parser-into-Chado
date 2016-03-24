@@ -17,6 +17,8 @@ class OWLStanza {
   private $children = array ();
   // The text value of a XML element.
   private $value;
+  // Indicates if there is no more to read from the OWL XML file.
+  private $is_finished = FALSE;
 
 
 
@@ -34,6 +36,24 @@ class OWLStanza {
   }
 
   /**
+   * A wrapper for XMLReader::read() read function.
+   *
+   * This function calls read() on the $owl object and checks to see
+   * if we are at the end of the XML file. If so, it sets the $is_finished
+   * member variable to TRUE.
+   *
+   * @return
+   *   The value of XMLReader::read().
+   */
+  private function owl_read() {
+    $retval = $this->owl->read();
+    if ($this->owl->nodeType == XMLReader::END_ELEMENT and $this->owl->name == 'rdf:RDF') {
+      $this->is_finished = TRUE;
+    }
+    return $retval;
+  }
+
+  /**
    *
    * @param private
    * This function is to parse each of the OWL Stanzas of the ro.owl file.
@@ -41,11 +61,17 @@ class OWLStanza {
 
     private function parse() {
 
-      // Get the tag_name by Stanza name and value
-      if ($this->owl->nodeType != XMLReader::ELEMENT) {
-        $this->owl->read();
+      // Make sure we are at the beginning of an element.
+      while ($this->owl->nodeType != XMLReader::ELEMENT) {
+        // In the event we've hit the end of the file, then return.
+        if ($this->is_finished) {
+          return;
+        }
+        $this->owl_read();
       }
+
       $this->tag_name = $this->owl->name;
+
       $has_value = $this->owl->hasValue;
       $is_empty = $this->owl->isEmptyElement;
 
@@ -66,13 +92,13 @@ class OWLStanza {
 
       // Determine if the element has a value. If so, then set the value for the class.
       if ($this->owl->hasValue) {
-        $this->owl->read();
+        $this->owl_read();
         $this->value = $this->owl->value;
       }
 
       // Get the children that should be parsed within the Stanza.
       if ($this->parse_children == TRUE) {
-        while ($this->owl->read()) {
+        while ($this->owl_read()) {
           if ($this->owl->nodeType == XMLReader::END_ELEMENT and $this->owl->name == $this->tag_name) {
             return;
           }
@@ -84,16 +110,7 @@ class OWLStanza {
       }
     }
 
-/*
- *
- *
- */
-    /*public static function get_next($owl) {
-    	while ($owl->nodeType != XMLReader::ELEMENT) {
-    		if (!$owl->read()) return NULL;
-    	}
-    	return new OWLStanza();
-    }*/
+
    /**
     * Get the Value
     *
@@ -217,6 +234,16 @@ class OWLStanza {
     }
     return NULL;
 
+  }
+
+  /**
+   * Checks if the OWL XML file has been completely parsed.
+   *
+   * @return
+   *   TRUE if parsing is completed, FALSE otherwise.
+   */
+  public function isFinished() {
+    return $this->is_finished;
   }
 }
 
