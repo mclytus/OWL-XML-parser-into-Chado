@@ -34,7 +34,7 @@ function tripal_cv_parse_owl($filename) {
   // vocabulary records.
   $ontology = new OWLStanza($owl);
 
-  // Inser the database record into Chado using the owl:Ontology stanza.
+  // Insert the database record into Chado using the owl:Ontology stanza.
   $about = $ontology->getAttribute('rdf:about');
   if (preg_match('/^.*\/(.*)\.owl.*$/', $about, $matches)) {
     $db_name = strtoupper($matches[1]);
@@ -52,6 +52,7 @@ function tripal_cv_parse_owl($filename) {
   $description = $ontology->getChild('dc:description');
   $cv_name = preg_replace("/[^\w]/", "_", strtolower($title->getValue()));
   $cv = tripal_insert_cv($cv_name, $description->getValue());
+
 
   // loop through each stanza, one at a time, and handle each one
   // based on the tag name.
@@ -84,6 +85,27 @@ function tripal_cv_parse_owl($filename) {
 
     // Get the next stanza in the OWL file.
     $stanza =  new OWLStanza($owl);
+
+exit;
+if ($owl->nodeType == XMLReader::END_ELEMENT and $owl->name == 'rdf:RDF') {
+  	$stanza =  new OWLStanza($owl);
+    	switch ($stanza->getTagName()) {
+  		case 'owl:AnnotationProperty':
+  			// tripal_owl_handle_annotation_property($stanza);
+  			//print_r("Unhandled stanza: " . $stanza->getTagName() . "\n");
+  			break;
+  		case 'rdf:Description':
+  			// tripal_owl_handle_description($stanza);
+  			break;
+  		case 'owl:ObjectProperty':
+  			// tripal_owl_handle_object_property($stanza);
+  			break;
+  		case 'owl:Class':
+  			tripal_owl_handle_class($stanza, $ontology);
+  			echo $stanza;
+  			break;
+  		default:
+  	}
   }
 
   // Close the XMLReader $owl object.
@@ -135,13 +157,7 @@ function tripal_owl_handle_class($stanza, $ontology) {
   }
   //echo "$about\n";
 
-
-
-
-
-
 }
 
-
-
+}
 
