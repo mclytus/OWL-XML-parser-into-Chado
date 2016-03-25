@@ -6,6 +6,7 @@
 
 require_once('OWLStanza.inc');
 
+
 /**
  * Parses an OWL XML file and imports the CV terms into Chado
  *
@@ -39,6 +40,8 @@ function tripal_cv_parse_owl($filename) {
   if (preg_match('/^.*\/(.*)\.owl.*$/', $about, $matches)) {
     $db_name = strtoupper($matches[1]);
   }
+
+
   $homepage = $ontology->getChild('foaf:homepage');
   $db = array(
     'url' => $homepage->getValue(),
@@ -85,8 +88,9 @@ function tripal_cv_parse_owl($filename) {
 
     // Get the next stanza in the OWL file.
     $stanza =  new OWLStanza($owl);
+print $stanza ."\n";
+	exit;
 
-exit;
 if ($owl->nodeType == XMLReader::END_ELEMENT and $owl->name == 'rdf:RDF') {
   	$stanza =  new OWLStanza($owl);
     	switch ($stanza->getTagName()) {
@@ -148,16 +152,74 @@ function tripal_owl_handle_description($stanza) {
  */
 function tripal_owl_handle_class($stanza, $ontology) {
 
-  $db_name = '';
+
+	// The about attribute contains the URL for the resource (our term).
+	// The chado.db.name and chado.dbxref.accession should be in this URL.
+	$db_name = '';
   $accession = '';
   $about = $stanza->getAttribute('rdf:about');
+
+  // Get the DB name and accession from the about attribute.
   if (preg_match('/.*\/(.+)_(.+)/', $about, $matches)) {
     $db_name = strtoupper($matches[1]);
     $accession = $matches[2];
   }
-  //echo "$about\n";
+  echo "$db_name . $accession\n";
 
-}
 
+  // Insert a DB record.
+  $db = null;
+  if (!array_key_exists($db_name, $ontologies)) {
+  	$db = array(
+  			'name' => $db_name
+  	);
+  	$db = tripal_insert_db($db);
+
+  	// Insert a dbxref record.
+  	$values = array(
+  			'db_id' => $db->db_id,
+  			'accession' => $accession
+  	);
+
+  	$dbxref = tripal_insert_dbxref($values);
+
+  	// Check to see if this database has records and if so, what CV it is using.
+  	// Because the OWL Class doensn't specify a name that Chado wants for the
+  	// cv table, we have to discovery it or add it. If we find a single record
+  	// that has a cvterm (hence associated with a CV) then we'll reuse the same
+  	// CV. Otherwise, we must add a new CV record and we'll use the $db_name
+  	// as the name.
+  	$cv = null;
+  	if (!$ontologies[$db_name]['cv']) {
+  		$sql = "
+      SELECT CV.*
+      FROM {cvterm} CVT
+        INNER JOIN {dbxref} DBX ON DBX.dbxref_id = CVT.dbxref_id
+        INNER JOIN {db} DB      ON DB.db_id      = DBX.db_id
+        INNER JOIN {cv} CV      ON CVT.cv_id     = CV.cv_id
+      WHERE DB.db_id = :db_id
+      LIMIT 1 OFFSET 0
+    ";
+  		$results = chado_query($sql, array(
+  				':db_id' => $db->db_id
+  		));
+  		if (!$results) {
+  			$cv = tripal_insert_cv($db->name, '');
+  		}
+  		else {
+  			$cv = $results->fetchObject();
+  		}
+  		$ontologies[$db_name]['cv'] = $cv;
+  	}
+  	else {
+  		$cv = $ontologies[$db_name]['cv'];
+  	}
+
+
+
+
+
+		}
+	}
 }
 

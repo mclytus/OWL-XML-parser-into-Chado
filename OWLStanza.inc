@@ -63,14 +63,11 @@ class OWLStanza {
 
       // Make sure we are at the beginning of an element.
       while ($this->owl->nodeType != XMLReader::ELEMENT) {
-        // In the event we've hit the end of the file, then return.
-        if ($this->is_finished) {
-          return;
-        }
         $this->owl_read();
-      }
+       }
 
       $this->tag_name = $this->owl->name;
+
 
       $has_value = $this->owl->hasValue;
       $is_empty = $this->owl->isEmptyElement;
