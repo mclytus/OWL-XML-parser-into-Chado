@@ -3,7 +3,7 @@
  * @file
  * @add file from header
  */
-
+// tripal_cv_parse_owl('ro.owl');
 require_once('OWLStanza.inc');
 
 
@@ -88,8 +88,7 @@ function tripal_cv_parse_owl($filename) {
 
     // Get the next stanza in the OWL file.
     $stanza =  new OWLStanza($owl);
-print $stanza ."\n";
-	exit;
+// exit;
 
 if ($owl->nodeType == XMLReader::END_ELEMENT and $owl->name == 'rdf:RDF') {
   	$stanza =  new OWLStanza($owl);
@@ -175,45 +174,45 @@ function tripal_owl_handle_class($stanza, $ontology) {
   	);
   	$db = tripal_insert_db($db);
 
-  	// Insert a dbxref record.
-  	$values = array(
-  			'db_id' => $db->db_id,
-  			'accession' => $accession
-  	);
+//   	// Insert a dbxref record.
+//   	$values = array(
+//   			'db_id' => $db->db_id,
+//   			'accession' => $accession
+//   	);
 
-  	$dbxref = tripal_insert_dbxref($values);
+//   	$dbxref = tripal_insert_dbxref($values);
 
-  	// Check to see if this database has records and if so, what CV it is using.
-  	// Because the OWL Class doensn't specify a name that Chado wants for the
-  	// cv table, we have to discovery it or add it. If we find a single record
-  	// that has a cvterm (hence associated with a CV) then we'll reuse the same
-  	// CV. Otherwise, we must add a new CV record and we'll use the $db_name
-  	// as the name.
-  	$cv = null;
-  	if (!$ontologies[$db_name]['cv']) {
-  		$sql = "
-      SELECT CV.*
-      FROM {cvterm} CVT
-        INNER JOIN {dbxref} DBX ON DBX.dbxref_id = CVT.dbxref_id
-        INNER JOIN {db} DB      ON DB.db_id      = DBX.db_id
-        INNER JOIN {cv} CV      ON CVT.cv_id     = CV.cv_id
-      WHERE DB.db_id = :db_id
-      LIMIT 1 OFFSET 0
-    ";
-  		$results = chado_query($sql, array(
-  				':db_id' => $db->db_id
-  		));
-  		if (!$results) {
-  			$cv = tripal_insert_cv($db->name, '');
-  		}
-  		else {
-  			$cv = $results->fetchObject();
-  		}
-  		$ontologies[$db_name]['cv'] = $cv;
-  	}
-  	else {
-  		$cv = $ontologies[$db_name]['cv'];
-  	}
+//   	// Check to see if this database has records and if so, what CV it is using.
+//   	// Because the OWL Class doensn't specify a name that Chado wants for the
+//   	// cv table, we have to discovery it or add it. If we find a single record
+//   	// that has a cvterm (hence associated with a CV) then we'll reuse the same
+//   	// CV. Otherwise, we must add a new CV record and we'll use the $db_name
+//   	// as the name.
+//   	$cv = null;
+//   	if (!$ontologies[$db_name]['cv']) {
+//   		$sql = "
+//       SELECT CV.*
+//       FROM {cvterm} CVT
+//         INNER JOIN {dbxref} DBX ON DBX.dbxref_id = CVT.dbxref_id
+//         INNER JOIN {db} DB      ON DB.db_id      = DBX.db_id
+//         INNER JOIN {cv} CV      ON CVT.cv_id     = CV.cv_id
+//       WHERE DB.db_id = :db_id
+//       LIMIT 1 OFFSET 0
+//     ";
+//   		$results = chado_query($sql, array(
+//   				':db_id' => $db->db_id
+//   		));
+//   		if (!$results) {
+//   			$cv = tripal_insert_cv($db->name, '');
+//   		}
+//   		else {
+//   			$cv = $results->fetchObject();
+//   		}
+//   		$ontologies[$db_name]['cv'] = $cv;
+//   	}
+//   	else {
+//   		$cv = $ontologies[$db_name]['cv'];
+//   	}
 
 
 
