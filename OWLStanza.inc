@@ -46,15 +46,8 @@ class OWLStanza {
    *   The value of XMLReader::read().
    */
   private function owl_read() {
-		$test = $this->owl->read();
-  	var_dump($test);
-//$retval = $this->owl->read();
-    //Earlier conditional read as the following:
+    $retval = $this->owl->read();
     if ($this->owl->nodeType == XMLReader::END_ELEMENT and $this->owl->name == 'rdf:RDF') {
-
-
-    //if ($this->owl->nodeType == XMLReader::END_ELEMENT or $this->owl->name == 'rdf:RDF') {
-    	var_dump($this->owl->nodeType);
       $this->is_finished = TRUE;
     }
     return $retval;
@@ -70,11 +63,14 @@ class OWLStanza {
 
       // Make sure we are at the beginning of an element.
       while ($this->owl->nodeType != XMLReader::ELEMENT) {
+        // In the event we've hit the end of the file, then return.
+        if ($this->is_finished) {
+          return;
+        }
         $this->owl_read();
        }
 
       $this->tag_name = $this->owl->name;
-
 
       $has_value = $this->owl->hasValue;
       $is_empty = $this->owl->isEmptyElement;
@@ -250,52 +246,53 @@ class OWLStanza {
     return $this->is_finished;
   }
 
+  /**
+   * Reconstructs the XML for the stanza.
+   *
+   * @return
+   *   A string containing XML for this stanza.
+   */
+  public function getXML() {
 
-/**
- * Reconstructs the XML for the stanza.
- *
- * @return
- *   A string containing XML for this stanza.
- */
+    // Start the element with the tag name.
+    $xml = '<' . $this->tag_name;
 
- public function getXML() {
-	// Start the element with the tag name.
-$xml = '<' . $this->tag_name;
-	// Iterate through the attributes and add them to our XML string.
-	if (count($this->attributes) > 0) {
-		foreach ($this->attributes as $aname => $value) {
-			$xml .=  " " . $aname . '="' . $value . '"';
-		}
-	}
+    // Iterate through the attributes and add them to our XML string.
+    if (count($this->attributes) > 0) {
+      foreach ($this->attributes as $aname => $value) {
+        $xml .=  " " . $aname . '="' . $value . '"';
+      }
+    }
 
-	// If this stanza has a value this implies there are no children,
-	// so close the element start, add the value and add the closing element
-	// tag.
-	if ($this->value) {
-		$xml .= '>' . $this->value . '</' . $this->tag_name . ">\n";
-		return $xml;
-	}
+    // If this stanza has a value this implies there are no children,
+    // so close the element start, add the value and add the closing element
+    // tag.
+    if ($this->value) {
+      $xml .= '>' . $this->value . '</' . $this->tag_name . ">\n";
+      return $xml;
+    }
 
-	// If we're here, we do not have a value. This is therefore an empty
-	// element, or it has children.  If we have no children then we
-	// have an empty element and we can close it out and return.
-	if (count($this->children) == 0) {
-		$xml .= " />\n";
-		return $xml;
-	}
-	// Add in the children's XML recursively.
-	$childs = '';
-	foreach ($this->children as $child) {
-		// We want to add two character indentation to all lines returned by
-		// the child XML.
-		$childs .= preg_replace("/^/","  ", $child->getXML());
-	}
-	$xml .= ">\n";
-	$xml .= $childs;
-	$xml .= "</" . $this->tag_name . ">\n";
-	return $xml;
-		}
-	}
+    // If we're here, we do not have a value. This is therefore an empty
+    // element, or it has children.  If we have no children then we
+    // have an empty element and we can close it out and return.
+    if (count($this->children) == 0) {
+      $xml .= " />\n";
+      return $xml;
+    }
+
+    // Add in the children's XML recursively.
+    $childs = '';
+    foreach ($this->children as $child) {
+      // We want to add two character indentation to all lines returned by
+      // the child XML.
+      $childs .= preg_replace("/^/","  ", $child->getXML());
+    }
+    $xml .= ">\n";
+    $xml .= $childs;
+    $xml .= "</" . $this->tag_name . ">\n";
+    return $xml;
+  }
+}
 
 
 

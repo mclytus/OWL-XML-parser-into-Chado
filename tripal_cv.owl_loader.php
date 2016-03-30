@@ -3,9 +3,8 @@
  * @file
  * @add file from header
  */
-// tripal_cv_parse_owl('ro.owl');
-require_once('OWLStanza.inc');
 
+require_once('OWLStanza.inc');
 
 /**
  * Parses an OWL XML file and imports the CV terms into Chado
@@ -19,6 +18,10 @@ require_once('OWLStanza.inc');
  * @throws Exception
  */
 function tripal_cv_parse_owl($filename) {
+
+  // Holds an array of CV and DB records that have already been
+  // inserted (reduces number of queires).
+  $vocabs = array();
 
   // Open the OWL file for parsing.
   $owl = new XMLReader();
@@ -40,8 +43,6 @@ function tripal_cv_parse_owl($filename) {
   if (preg_match('/^.*\/(.*)\.owl.*$/', $about, $matches)) {
     $db_name = strtoupper($matches[1]);
   }
-
-
   $homepage = $ontology->getChild('foaf:homepage');
   $db = array(
     'url' => $homepage->getValue(),
@@ -56,6 +57,10 @@ function tripal_cv_parse_owl($filename) {
   $cv_name = preg_replace("/[^\w]/", "_", strtolower($title->getValue()));
   $cv = tripal_insert_cv($cv_name, $description->getValue());
 
+  // Add this CV and DB to our vocabs array so we can reuse it later.
+  $vocabs[$db_name]['cv'] = $cv;
+  $vocabs[$db_name]['db'] = $db;
+  $vocabs['this'] = $db_name;
 
   // loop through each stanza, one at a time, and handle each one
   // based on the tag name.
@@ -74,7 +79,7 @@ function tripal_cv_parse_owl($filename) {
         // tripal_owl_handle_object_property($stanza);
         break;
       case 'owl:Class':
-        tripal_owl_handle_class($stanza, $ontology);
+        tripal_owl_handle_class($stanza, $vocabs);
         break;
       case 'owl:Axiom':
         break;
@@ -88,27 +93,6 @@ function tripal_cv_parse_owl($filename) {
 
     // Get the next stanza in the OWL file.
     $stanza =  new OWLStanza($owl);
-// exit;
-
-if ($owl->nodeType == XMLReader::END_ELEMENT and $owl->name == 'rdf:RDF') {
-  	$stanza =  new OWLStanza($owl);
-    	switch ($stanza->getTagName()) {
-  		case 'owl:AnnotationProperty':
-  			// tripal_owl_handle_annotation_property($stanza);
-  			//print_r("Unhandled stanza: " . $stanza->getTagName() . "\n");
-  			break;
-  		case 'rdf:Description':
-  			// tripal_owl_handle_description($stanza);
-  			break;
-  		case 'owl:ObjectProperty':
-  			// tripal_owl_handle_object_property($stanza);
-  			break;
-  		case 'owl:Class':
-  			tripal_owl_handle_class($stanza, $ontology);
-  			echo $stanza;
-  			break;
-  		default:
-  	}
   }
 
   // Close the XMLReader $owl object.
@@ -149,36 +133,45 @@ function tripal_owl_handle_description($stanza) {
  * @param
  * $owl
  */
-function tripal_owl_handle_class($stanza, $ontology) {
+function tripal_owl_handle_class($stanza, $vocabs) {
 
-
-	// The about attribute contains the URL for the resource (our term).
-	// The chado.db.name and chado.dbxref.accession should be in this URL.
-	$db_name = '';
+  // Initialize the database and cv variables.
+  $db_name = '';
   $accession = '';
-  $about = $stanza->getAttribute('rdf:about');
+  $db = null;
+  $cv = null;
 
   // Get the DB name and accession from the about attribute.
+  $about = $stanza->getAttribute('rdf:about');
   if (preg_match('/.*\/(.+)_(.+)/', $about, $matches)) {
-    $db_name = strtoupper($matches[1]);
-    $accession = $matches[2];
+     $db_name = strtoupper($matches[1]);
+     $accession = $matches[2];
+  }
+  else {
+    throw new Exception("owl:Class stanza is missing the 'rdf:about' attribute. " .
+      "This is necessary to determine the term's accession: \n\n" . $stanza->getXML());
   }
 
-  // Insert a DB record.
-  $db = null;
-  if (!array_key_exists($db_name, $ontologies)) {
-  	$db = array(
-  			'name' => $db_name
-  	);
-  	$db = tripal_insert_db($db);
+  // Insert a DB record if it doesn't already exist.
+  if (array_key_exists($db_name, $vocabs)) {
+    $db = $vocabs[$db_name]['db'];
+    $cv = $vocabs[$db_name]['cv'];
+  }
+  else {
+    // Unfortunately, all we have is the name. The OWL format d
+    // doesn't provides us the URL, description, etc.
+    $values = array(
+      'name' => $db_name
+    );
+    $db = tripal_insert_db($values);
 
-  	// Check to see if this database has records and if so, what CV it is using.
-  	// Because the OWL Class doensn't specify a name that Chado wants for the
-  	// cv table, we have to discovery it or add it. If we find a single record
-  	// that has a cvterm (hence associated with a CV) then we'll reuse the same
-  	// CV. Otherwise, we must add a new CV record and we'll use the $db_name
-  	// as the name.
-  	$sql = "
+    // Check to see if this database has records and if so, what CV it is using.
+    // Because the OWL Class doensn't specify a name that Chado wants for the
+    // cv table, we have to discovery it or add it. If we find a single record
+    // that has a cvterm (hence associated with a CV) then we'll reuse the same
+    // CV. Otherwise, we must add a new CV record and we'll use the $db_name
+    // as the name.
+    $sql = "
       SELECT CV.*
       FROM {cvterm} CVT
           INNER JOIN {dbxref} DBX ON DBX.dbxref_id = CVT.dbxref_id
@@ -187,41 +180,41 @@ function tripal_owl_handle_class($stanza, $ontology) {
         WHERE DB.db_id = :db_id
         LIMIT 1 OFFSET 0
       ";
-  	$results = chado_query($sql, array(':db_id' => $db->db_id));
-  	$cv = $results->fetchObject();
-  	// If there are no terms using this databaset then we need to add the
-  	// vocabulary.
-  	if (!$cv) {
-  		$cv = tripal_insert_cv($db->name, '');
-  	}
-  	// Add our new DB and CV to the vocab array.
-  	$vocabs[$db_name]['cv'] = $cv;
-  	$vocabs[$db_name]['db'] = $db;
-  	}
-  	// Insert a dbxref record.
-  	$values = array(
-  			'db_id' => $db->db_id,
-  			'accession' => $accession
-  	);
-  	$dbxref = tripal_insert_dbxref($values);
-  	// Insert a new cvterm record.
+    $results = chado_query($sql, array(':db_id' => $db->db_id));
+    $cv = $results->fetchObject();
+    // If there are no terms using this databaset then we need to add the
+    // vocabulary.
+    if (!$cv) {
+      $cv = tripal_insert_cv($db->name, '');
+    }
 
-  	// Create the term array used for the tripal_insert_cvterm() function.
-  	$cvterm_name = null;
-  	$definition = '';
-  	$term = array(
-  			'id' => $db->name .':'. $dbxref->accession,
-  			'name' => $cvterm_name,
-  			'cv_name' => $cv->name,
-  			'definition' => $definition,
-  	);
-  	$option =array();
-  	if ($vocabs['this'] != $db->name){
-  		$option['update_existing'] = FALSE;
-  	}
-	$cvterm = tripal_insert_cvterm($term, $option);
-return;
-	}
+    // Add our new DB and CV to the vocab array.
+    $vocabs[$db_name]['cv'] = $cv;
+    $vocabs[$db_name]['db'] = $db;
+  }
+
+  // Insert a dbxref record.
+  $values = array(
+    'db_id' => $db->db_id,
+    'accession' => $accession
+  );
+  $dbxref = tripal_insert_dbxref($values);
+
+  // Insert a new cvterm record.
+  $cvterm_name = null;
+  $definition = '';
+
+  $term = array(
+  	'id' => $db->name .':'. $dbxref->accession,
+  	'name' => $cvterm_name,
+  	'cv_name' => $cv->name,
+  	'definition' => $definition,
+  );
+  $option =array();
+  if ($vocabs['this'] != $db->name){
+  	$option['update_existing'] = FALSE;
+  }
+  $cvterm = tripal_insert_cvterm($term, $option);
 
 }
 
