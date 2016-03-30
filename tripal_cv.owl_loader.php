@@ -163,8 +163,6 @@ function tripal_owl_handle_class($stanza, $ontology) {
     $db_name = strtoupper($matches[1]);
     $accession = $matches[2];
   }
-  echo "$db_name . $accession\n";
-
 
   // Insert a DB record.
   $db = null;
@@ -174,51 +172,56 @@ function tripal_owl_handle_class($stanza, $ontology) {
   	);
   	$db = tripal_insert_db($db);
 
-//   	// Insert a dbxref record.
-//   	$values = array(
-//   			'db_id' => $db->db_id,
-//   			'accession' => $accession
-//   	);
+  	// Check to see if this database has records and if so, what CV it is using.
+  	// Because the OWL Class doensn't specify a name that Chado wants for the
+  	// cv table, we have to discovery it or add it. If we find a single record
+  	// that has a cvterm (hence associated with a CV) then we'll reuse the same
+  	// CV. Otherwise, we must add a new CV record and we'll use the $db_name
+  	// as the name.
+  	$sql = "
+      SELECT CV.*
+      FROM {cvterm} CVT
+          INNER JOIN {dbxref} DBX ON DBX.dbxref_id = CVT.dbxref_id
+          INNER JOIN {db} DB      ON DB.db_id      = DBX.db_id
+          INNER JOIN {cv} CV      ON CVT.cv_id     = CV.cv_id
+        WHERE DB.db_id = :db_id
+        LIMIT 1 OFFSET 0
+      ";
+  	$results = chado_query($sql, array(':db_id' => $db->db_id));
+  	$cv = $results->fetchObject();
+  	// If there are no terms using this databaset then we need to add the
+  	// vocabulary.
+  	if (!$cv) {
+  		$cv = tripal_insert_cv($db->name, '');
+  	}
+  	// Add our new DB and CV to the vocab array.
+  	$vocabs[$db_name]['cv'] = $cv;
+  	$vocabs[$db_name]['db'] = $db;
+  	}
+  	// Insert a dbxref record.
+  	$values = array(
+  			'db_id' => $db->db_id,
+  			'accession' => $accession
+  	);
+  	$dbxref = tripal_insert_dbxref($values);
+  	// Insert a new cvterm record.
 
-//   	$dbxref = tripal_insert_dbxref($values);
-
-//   	// Check to see if this database has records and if so, what CV it is using.
-//   	// Because the OWL Class doensn't specify a name that Chado wants for the
-//   	// cv table, we have to discovery it or add it. If we find a single record
-//   	// that has a cvterm (hence associated with a CV) then we'll reuse the same
-//   	// CV. Otherwise, we must add a new CV record and we'll use the $db_name
-//   	// as the name.
-//   	$cv = null;
-//   	if (!$ontologies[$db_name]['cv']) {
-//   		$sql = "
-//       SELECT CV.*
-//       FROM {cvterm} CVT
-//         INNER JOIN {dbxref} DBX ON DBX.dbxref_id = CVT.dbxref_id
-//         INNER JOIN {db} DB      ON DB.db_id      = DBX.db_id
-//         INNER JOIN {cv} CV      ON CVT.cv_id     = CV.cv_id
-//       WHERE DB.db_id = :db_id
-//       LIMIT 1 OFFSET 0
-//     ";
-//   		$results = chado_query($sql, array(
-//   				':db_id' => $db->db_id
-//   		));
-//   		if (!$results) {
-//   			$cv = tripal_insert_cv($db->name, '');
-//   		}
-//   		else {
-//   			$cv = $results->fetchObject();
-//   		}
-//   		$ontologies[$db_name]['cv'] = $cv;
-//   	}
-//   	else {
-//   		$cv = $ontologies[$db_name]['cv'];
-//   	}
-
-
-
-
-
-		}
+  	// Create the term array used for the tripal_insert_cvterm() function.
+  	$cvterm_name = null;
+  	$definition = '';
+  	$term = array(
+  			'id' => $db->name .':'. $dbxref->accession,
+  			'name' => $cvterm_name,
+  			'cv_name' => $cv->name,
+  			'definition' => $definition,
+  	);
+  	$option =array();
+  	if ($vocabs['this'] != $db->name){
+  		$option['update_existing'] = FALSE;
+  	}
+	$cvterm = tripal_insert_cvterm($term, $option);
+return;
 	}
+
 }
 
