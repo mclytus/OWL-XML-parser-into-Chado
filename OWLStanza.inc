@@ -46,12 +46,20 @@ class OWLStanza {
    *   The value of XMLReader::read().
    */
   private function owl_read() {
-    $retval = $this->owl->read();
+    $test = $this->owl->read();
+  	var_dump($test);
+//$retval = $this->owl->read();
+    //Earlier conditional read as the following:
     if ($this->owl->nodeType == XMLReader::END_ELEMENT and $this->owl->name == 'rdf:RDF') {
+
+
+    //if ($this->owl->nodeType == XMLReader::END_ELEMENT or $this->owl->name == 'rdf:RDF') {
+    	var_dump($this->owl->nodeType);
       $this->is_finished = TRUE;
     }
     return $retval;
   }
+    
 
   /**
    *
