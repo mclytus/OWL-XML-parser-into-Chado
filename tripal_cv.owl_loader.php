@@ -50,7 +50,7 @@ function tripal_cv_parse_owl($filename) {
   );
   $db = tripal_insert_db($db);
 
-  // Insert the controlled vocabluary record into Chado using the
+  // Insert the controlled vocabulary record into Chado using the
   // owl:Ontology stanza.
   $title = $ontology->getChild('dc:title');
   $description = $ontology->getChild('dc:description');
@@ -158,7 +158,7 @@ function tripal_owl_handle_class($stanza, $vocabs) {
     $cv = $vocabs[$db_name]['cv'];
   }
   else {
-    // Unfortunately, all we have is the name. The OWL format d
+    // Unfortunately, all we have is the name. The OWL format
     // doesn't provides us the URL, description, etc.
     $values = array(
       'name' => $db_name
@@ -201,7 +201,7 @@ function tripal_owl_handle_class($stanza, $vocabs) {
   $dbxref = tripal_insert_dbxref($values);
 
   // Insert a new cvterm record.
-  $cvterm_name = null;
+  $cvterm_name = '';
   $definition = '';
 
   $term = array(
@@ -215,6 +215,10 @@ function tripal_owl_handle_class($stanza, $vocabs) {
   	$option['update_existing'] = FALSE;
   }
   $cvterm = tripal_insert_cvterm($term, $option);
+
+
+
+
 
 }
 
