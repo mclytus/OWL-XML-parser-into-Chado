@@ -129,6 +129,26 @@ function tripal_owl_handle_description($stanza) {
 }
 
 /**
+ * @param
+ * $owl
+ */
+
+function tripal_owl_handle_class_dependencies ($stanza, $dep) {
+	// Step 1: Iteration through the class stanza for db_name to be inserted later inthe chado.db.table.
+
+	$dep = array();
+	$about = $stanza->getAttribute('rdf:about');
+	if (preg_match('/.*\/(.+)_(.+)/', $about, $matches)) {
+		$db_name = strtoupper($matches[1]);
+		$accession = $matches[2];
+	}
+
+	return;
+
+}
+
+
+/**
  *
  * @param
  * $owl
@@ -182,7 +202,7 @@ function tripal_owl_handle_class($stanza, $vocabs) {
       ";
     $results = chado_query($sql, array(':db_id' => $db->db_id));
     $cv = $results->fetchObject();
-    // If there are no terms using this databaset then we need to add the
+    // If there are no terms using this database then we need to add the
     // vocabulary.
     if (!$cv) {
       $cv = tripal_insert_cv($db->name, '');
