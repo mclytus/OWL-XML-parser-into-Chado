@@ -19,9 +19,12 @@ require_once('OWLStanza.inc');
  */
 function tripal_cv_parse_owl($filename) {
 
+  // TODO: this all should occur inside of a transaction.
+
   // Holds an array of CV and DB records that have already been
   // inserted (reduces number of queires).
   $vocabs = array();
+
 
   // Open the OWL file for parsing.
   $owl = new XMLReader();
@@ -62,6 +65,40 @@ function tripal_cv_parse_owl($filename) {
   $vocabs[$db_name]['db'] = $db;
   $vocabs['this'] = $db_name;
 
+
+  ////////////////////////////////////////////////////////////////////////////
+  // Step 1:  Make sure that all dependencies are met
+  ////////////////////////////////////////////////////////////////////////////
+
+  // loop through each stanza, one at a time, and handle each one
+  // based on the tag name.
+  $stanza =  new OWLStanza($owl);
+  $deps = array();
+  while (!$stanza->isFinished()) {
+    // Use the tag name to identify which function should be called.
+    switch ($stanza->getTagName()) {
+      case 'owl:Class':
+        tripal_owl_check_class_depedencies($stanza, $deps);
+        break;
+    }
+  }
+  if (count($deps) > 0) {
+    // We have unmet depdencies. Print those out and return.
+  }
+
+  return;
+
+  ////////////////////////////////////////////////////////////////////////////
+  // Step 2: If we pass the dependency check in step1 then we can insert
+  // the terms.
+  ////////////////////////////////////////////////////////////////////////////
+
+  // Reload the ontology to reposition at the beginning for inserting the
+  // new terms.
+  $owl = new XMLReader();
+  $rdf = new OWLStanza($owl,FALSE);
+  $ontology = new OWLStanza($owl);
+
   // loop through each stanza, one at a time, and handle each one
   // based on the tag name.
   $stanza =  new OWLStanza($owl);
@@ -99,6 +136,14 @@ function tripal_cv_parse_owl($filename) {
   $owl->close();
 }
 
+/**
+ *
+ * @param $stanza
+ * @param $deps
+ */
+function tripal_owl_check_class_depedencies($stanza, &$deps) {
+
+}
 
 /**
  *
@@ -225,20 +270,15 @@ function tripal_owl_handle_class($stanza, $vocabs) {
   $definition = '';
 
   $term = array(
-  	'id' => $db->name .':'. $dbxref->accession,
-  	'name' => $cvterm_name,
-  	'cv_name' => $cv->name,
-  	'definition' => $definition,
+    'id' => $db->name .':'. $dbxref->accession,
+    'name' => $cvterm_name,
+    'cv_name' => $cv->name,
+    'definition' => $definition,
   );
   $option =array();
   if ($vocabs['this'] != $db->name){
-  	$option['update_existing'] = FALSE;
+    $option['update_existing'] = FALSE;
   }
   $cvterm = tripal_insert_cvterm($term, $option);
-
-
-
-
-
 }
 
