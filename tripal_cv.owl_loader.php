@@ -25,7 +25,6 @@ function tripal_cv_parse_owl($filename) {
   // inserted (reduces number of queires).
   $vocabs = array();
 
-
   // Open the OWL file for parsing.
   $owl = new XMLReader();
   if (!$owl->open($filename)) {
@@ -74,6 +73,7 @@ function tripal_cv_parse_owl($filename) {
   // based on the tag name.
   $stanza =  new OWLStanza($owl);
   $deps = array();
+
   while (!$stanza->isFinished()) {
     // Use the tag name to identify which function should be called.
     switch ($stanza->getTagName()) {
@@ -84,9 +84,13 @@ function tripal_cv_parse_owl($filename) {
   }
   if (count($deps) > 0) {
     // We have unmet depdencies. Print those out and return.
+  	$deps[$db_name]['cv'] = $cv;
+  	$deps[$db_name]['db'] = $db;
+  	$deps['this'] = $db_name;
   }
+print $deps;
 
-  return;
+  //return;
 
   ////////////////////////////////////////////////////////////////////////////
   // Step 2: If we pass the dependency check in step1 then we can insert
@@ -116,7 +120,7 @@ function tripal_cv_parse_owl($filename) {
         // tripal_owl_handle_object_property($stanza);
         break;
       case 'owl:Class':
-        tripal_owl_handle_class($stanza, $vocabs);
+        // tripal_owl_handle_class($stanza, $vocabs);
         break;
       case 'owl:Axiom':
         break;
@@ -142,7 +146,30 @@ function tripal_cv_parse_owl($filename) {
  * @param $deps
  */
 function tripal_owl_check_class_depedencies($stanza, &$deps) {
+	// Initialize the database and cv variables.
+	$db_name = '';
+	$accession = '';
+	$db = null;
+	$cv = null;
+	$deps = array();
 
+	// Get the DB name and accession from the about attribute.
+	$about = $stanza->getAttribute('rdf:about');
+	if (preg_match('/.*\/(.+)_(.+)/', $about, $matches)) {
+		$db_name = strtoupper($matches[1]);
+		$accession = $matches[2];
+	}
+	else {
+		throw new Exception("owl:Class stanza is missing the 'rdf:about' attribute. " .
+				"This is necessary to determine the term's accession: \n\n" . $stanza->getXML());
+	}
+
+	// Insert a DB  & CV record if it doesn't already exist.
+	if (array_key_exists($db_name, $deps)) {
+		$deps[$db_name]['db'] = $db;
+		$deps[$db_name]['cv'] = $cv;
+
+	}
 }
 
 /**
@@ -172,26 +199,6 @@ function tripal_owl_handle_annotation_property($stanza) {
 function tripal_owl_handle_description($stanza) {
 
 }
-
-/**
- * @param
- * $owl
- */
-
-function tripal_owl_handle_class_dependencies ($stanza, $dep) {
-	// Step 1: Iteration through the class stanza for db_name to be inserted later inthe chado.db.table.
-
-	$dep = array();
-	$about = $stanza->getAttribute('rdf:about');
-	if (preg_match('/.*\/(.+)_(.+)/', $about, $matches)) {
-		$db_name = strtoupper($matches[1]);
-		$accession = $matches[2];
-	}
-
-	return;
-
-}
-
 
 /**
  *
