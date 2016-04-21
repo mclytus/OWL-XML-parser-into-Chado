@@ -84,9 +84,9 @@ function tripal_cv_parse_owl($filename) {
   }
   if (count($deps) > 0) {
     // We have unmet depdencies. Print those out and return.
-  	$deps[$db_name]['cv'] = $cv;
-  	$deps[$db_name]['db'] = $db;
-  	$deps['this'] = $db_name;
+    $deps[$db_name]['cv'] = $cv;
+    $deps[$db_name]['db'] = $db;
+    $deps['this'] = $db_name;
   }
 print $deps;
 
@@ -146,30 +146,29 @@ print $deps;
  * @param $deps
  */
 function tripal_owl_check_class_depedencies($stanza, &$deps) {
-	// Initialize the database and cv variables.
-	$db_name = '';
-	$accession = '';
-	$db = null;
-	$cv = null;
-	$deps = array();
+  // Initialize the database and cv variables.
+  $db_name = '';
+  $accession = '';
+  $db = null;
+  $cv = null;
 
-	// Get the DB name and accession from the about attribute.
-	$about = $stanza->getAttribute('rdf:about');
-	if (preg_match('/.*\/(.+)_(.+)/', $about, $matches)) {
-		$db_name = strtoupper($matches[1]);
-		$accession = $matches[2];
-	}
-	else {
-		throw new Exception("owl:Class stanza is missing the 'rdf:about' attribute. " .
-				"This is necessary to determine the term's accession: \n\n" . $stanza->getXML());
-	}
+  // Get the DB name and accession from the about attribute.
+  $about = $stanza->getAttribute('rdf:about');
+  if (preg_match('/.*\/(.+)_(.+)/', $about, $matches)) {
+    $db_name = strtoupper($matches[1]);
+    $accession = $matches[2];
+  }
+  else {
+    throw new Exception("owl:Class stanza is missing the 'rdf:about' attribute. " .
+        "This is necessary to determine the term's accession: \n\n" . $stanza->getXML());
+  }
 
-	// Insert a DB  & CV record if it doesn't already exist.
-	if (array_key_exists($db_name, $deps)) {
-		$deps[$db_name]['db'] = $db;
-		$deps[$db_name]['cv'] = $cv;
+  // Insert a DB  & CV record if it doesn't already exist.
+  if (!array_key_exists($db_name, $deps)) {
+    $deps[$db_name]['db'] = $db;
+    $deps[$db_name]['cv'] = $cv;
 
-	}
+  }
 }
 
 /**
