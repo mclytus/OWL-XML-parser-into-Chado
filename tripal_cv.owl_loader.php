@@ -84,13 +84,8 @@ function tripal_cv_parse_owl($filename) {
   }
   if (count($deps) > 0) {
     // We have unmet depdencies. Print those out and return.
-    $deps[$db_name]['cv'] = $cv;
-    $deps[$db_name]['db'] = $db;
-    $deps['this'] = $db_name;
   }
-print $deps;
-
-  //return;
+ return;
 
   ////////////////////////////////////////////////////////////////////////////
   // Step 2: If we pass the dependency check in step1 then we can insert
@@ -150,7 +145,6 @@ function tripal_owl_check_class_depedencies($stanza, &$deps) {
   $db_name = '';
   $accession = '';
   $db = null;
-  $cv = null;
 
   // Get the DB name and accession from the about attribute.
   $about = $stanza->getAttribute('rdf:about');
@@ -165,11 +159,11 @@ function tripal_owl_check_class_depedencies($stanza, &$deps) {
 
   // Insert a DB  & CV record if it doesn't already exist.
   if (!array_key_exists($db_name, $deps)) {
-    $deps[$db_name]['db'] = $db;
-    $deps[$db_name]['cv'] = $cv;
-
+    $missing_deps[$db_name];
   }
+  echo $missing_deps;
 }
+
 
 /**
  *
