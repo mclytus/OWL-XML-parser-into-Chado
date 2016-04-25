@@ -75,10 +75,14 @@ function tripal_cv_parse_owl($filename) {
   $deps = array();
 
   while (!$stanza->isFinished()) {
+
+  	print ("I am in line 77 loop");
     // Use the tag name to identify which function should be called.
     switch ($stanza->getTagName()) {
       case 'owl:Class':
+      	print ("case condition has been met");
         tripal_owl_check_class_depedencies($stanza, $deps);
+
         break;
     }
   }
@@ -115,7 +119,7 @@ function tripal_cv_parse_owl($filename) {
         // tripal_owl_handle_object_property($stanza);
         break;
       case 'owl:Class':
-        // tripal_owl_handle_class($stanza, $vocabs);
+        tripal_owl_handle_class($stanza, $vocabs);
         break;
       case 'owl:Axiom':
         break;
