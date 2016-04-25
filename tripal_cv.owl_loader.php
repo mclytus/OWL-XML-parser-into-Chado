@@ -75,16 +75,14 @@ function tripal_cv_parse_owl($filename) {
   $deps = array();
 
   while (!$stanza->isFinished()) {
-
-  	print ("I am in line 77 loop");
-    // Use the tag name to identify which function should be called.
+  	// Use the tag name to identify which function should be called.
     switch ($stanza->getTagName()) {
       case 'owl:Class':
-      	print ("case condition has been met");
-        tripal_owl_check_class_depedencies($stanza, $deps);
-
+      	tripal_owl_check_class_depedencies($stanza, $deps);
         break;
     }
+    // Get the next stanza in the OWL file.
+    $stanza =  new OWLStanza($owl);
   }
   if (count($deps) > 0) {
     // We have unmet depdencies. Print those out and return.
@@ -163,9 +161,9 @@ function tripal_owl_check_class_depedencies($stanza, &$deps) {
 
   // Insert a DB  & CV record if it doesn't already exist.
   if (!array_key_exists($db_name, $deps)) {
-    $missing_deps[$db_name];
+    $deps[$db_name];
   }
-  echo $missing_deps;
+  echo $deps;
 }
 
 
