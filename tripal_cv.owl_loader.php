@@ -86,6 +86,7 @@ function tripal_cv_parse_owl($filename) {
   }
   if (count($deps) > 0) {
     // We have unmet depdencies. Print those out and return.
+    echo $deps;
   }
  return;
 
@@ -117,7 +118,7 @@ function tripal_cv_parse_owl($filename) {
         // tripal_owl_handle_object_property($stanza);
         break;
       case 'owl:Class':
-        tripal_owl_handle_class($stanza, $vocabs);
+        // tripal_owl_handle_class($stanza, $vocabs);
         break;
       case 'owl:Axiom':
         break;
