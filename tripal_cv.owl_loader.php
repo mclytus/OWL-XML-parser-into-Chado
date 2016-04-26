@@ -78,6 +78,7 @@ function tripal_cv_parse_owl($filename) {
   	// Use the tag name to identify which function should be called.
     switch ($stanza->getTagName()) {
       case 'owl:Class':
+      	//print_r ($stanza->getAttributes());
       	tripal_owl_check_class_depedencies($stanza, $deps);
         break;
     }
@@ -86,12 +87,11 @@ function tripal_cv_parse_owl($filename) {
   }
   if (count($deps) > 0) {
     // We have unmet depdencies. Print those out and return.
-    echo $deps;
   }
  return;
 
   ////////////////////////////////////////////////////////////////////////////
-  // Step 2: If we pass the dependency check in step1 then we can insert
+  // Step 2: If we pass the dependency check in step 1 then we can insert
   // the terms.
   ////////////////////////////////////////////////////////////////////////////
 
@@ -118,7 +118,7 @@ function tripal_cv_parse_owl($filename) {
         // tripal_owl_handle_object_property($stanza);
         break;
       case 'owl:Class':
-        // tripal_owl_handle_class($stanza, $vocabs);
+        tripal_owl_handle_class($stanza, $vocabs);
         break;
       case 'owl:Axiom':
         break;
@@ -151,20 +151,27 @@ function tripal_owl_check_class_depedencies($stanza, &$deps) {
 
   // Get the DB name and accession from the about attribute.
   $about = $stanza->getAttribute('rdf:about');
+//   print_r($about);
   if (preg_match('/.*\/(.+)_(.+)/', $about, $matches)) {
     $db_name = strtoupper($matches[1]);
     $accession = $matches[2];
+
   }
   else {
     throw new Exception("owl:Class stanza is missing the 'rdf:about' attribute. " .
         "This is necessary to determine the term's accession: \n\n" . $stanza->getXML());
   }
 
-  // Insert a DB  & CV record if it doesn't already exist.
+
+  // Insert a DB record if it doesn't already exist.
   if (!array_key_exists($db_name, $deps)) {
     $deps[$db_name];
   }
-  echo $deps;
+
+  foreach($deps as &$sep){
+  	echo $sep;
+
+  }
 }
 
 
