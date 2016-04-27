@@ -78,7 +78,6 @@ function tripal_cv_parse_owl($filename) {
   	// Use the tag name to identify which function should be called.
     switch ($stanza->getTagName()) {
       case 'owl:Class':
-      	//print_r ($stanza->getAttributes());
       	tripal_owl_check_class_depedencies($stanza, $deps);
         break;
     }
@@ -118,7 +117,7 @@ function tripal_cv_parse_owl($filename) {
         // tripal_owl_handle_object_property($stanza);
         break;
       case 'owl:Class':
-        tripal_owl_handle_class($stanza, $vocabs);
+        // tripal_owl_handle_class($stanza, $vocabs);
         break;
       case 'owl:Axiom':
         break;
@@ -151,7 +150,7 @@ function tripal_owl_check_class_depedencies($stanza, &$deps) {
 
   // Get the DB name and accession from the about attribute.
   $about = $stanza->getAttribute('rdf:about');
-//   print_r($about);
+  // print_r($about);
   if (preg_match('/.*\/(.+)_(.+)/', $about, $matches)) {
     $db_name = strtoupper($matches[1]);
     $accession = $matches[2];
@@ -162,16 +161,11 @@ function tripal_owl_check_class_depedencies($stanza, &$deps) {
         "This is necessary to determine the term's accession: \n\n" . $stanza->getXML());
   }
 
-
   // Insert a DB record if it doesn't already exist.
   if (!array_key_exists($db_name, $deps)) {
     $deps[$db_name];
   }
-
-  foreach($deps as &$sep){
-  	echo $sep;
-
-  }
+  print_r($deps);
 }
 
 
@@ -242,7 +236,7 @@ function tripal_owl_handle_class($stanza, $vocabs) {
 
     // Check to see if this database has records and if so, what CV it is using.
     // Because the OWL Class doensn't specify a name that Chado wants for the
-    // cv table, we have to discovery it or add it. If we find a single record
+    // cv table, we have to discover it or add it. If we find a single record
     // that has a cvterm (hence associated with a CV) then we'll reuse the same
     // CV. Otherwise, we must add a new CV record and we'll use the $db_name
     // as the name.
