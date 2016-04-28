@@ -45,25 +45,6 @@ function tripal_cv_parse_owl($filename) {
   if (preg_match('/^.*\/(.*)\.owl.*$/', $about, $matches)) {
     $db_name = strtoupper($matches[1]);
   }
-  $homepage = $ontology->getChild('foaf:homepage');
-  $db = array(
-    'url' => $homepage->getValue(),
-    'name' => $db_name
-  );
-  $db = tripal_insert_db($db);
-
-  // Insert the controlled vocabulary record into Chado using the
-  // owl:Ontology stanza.
-  $title = $ontology->getChild('dc:title');
-  $description = $ontology->getChild('dc:description');
-  $cv_name = preg_replace("/[^\w]/", "_", strtolower($title->getValue()));
-  $cv = tripal_insert_cv($cv_name, $description->getValue());
-
-  // Add this CV and DB to our vocabs array so we can reuse it later.
-  $vocabs[$db_name]['cv'] = $cv;
-  $vocabs[$db_name]['db'] = $db;
-  $vocabs['this'] = $db_name;
-
 
   ////////////////////////////////////////////////////////////////////////////
   // Step 1:  Make sure that all dependencies are met
@@ -85,11 +66,52 @@ function tripal_cv_parse_owl($filename) {
     $stanza =  new OWLStanza($owl);
   }
   if (count($deps) > 0) {
-    // We have unmet depdencies. Print those out and return.
+    // We have unmet dependencies. Print those out and return.
   }
- return;
+  // print ('We have missing dependencies. List DB’s first, then terms');
 
-  ////////////////////////////////////////////////////////////////////////////
+  // Check to see if this database has records and if so, what CV it is using.
+  // Because the OWL Class doensn't specify a name that Chado wants for the
+  // cv table, we have to discover it or add it. If we find a single record
+  // that has a cvterm (hence associated with a CV) then we'll reuse the same
+  // CV. Otherwise, we must add a new CV record and we'll use the $db_name
+  // as the name.
+  $sql = "
+      SELECT CV.*
+      FROM {cvterm} CVT
+          INNER JOIN {dbxref} DBX ON DBX.dbxref_id = CVT.dbxref_id
+          INNER JOIN {db} DB      ON DB.db_id      = DBX.db_id
+          INNER JOIN {cv} CV      ON CVT.cv_id     = CV.cv_id
+        WHERE DB.db_id = :db_id
+        LIMIT 1 OFFSET 0
+      ";
+  $results = chado_query($sql, array(':db_id' => $db->db_id));
+  $cv = $results->fetchObject();
+
+ return;
+/////////////////////////////////////////////////////////////////////////////
+
+
+ $homepage = $ontology->getChild('foaf:homepage');
+ $db = array(
+ 		'url' => $homepage->getValue(),
+ 		'name' => $db_name
+ );
+ $db = tripal_insert_db($db);
+
+ // Insert the controlled vocabulary record into Chado using the
+ // owl:Ontology stanza.
+ $title = $ontology->getChild('dc:title');
+ $description = $ontology->getChild('dc:description');
+ $cv_name = preg_replace("/[^\w]/", "_", strtolower($title->getValue()));
+ $cv = tripal_insert_cv($cv_name, $description->getValue());
+
+ // Add this CV and DB to our vocabs array so we can reuse it later.
+ $vocabs[$db_name]['cv'] = $cv;
+ $vocabs[$db_name]['db'] = $db;
+ $vocabs['this'] = $db_name;
+
+ ////////////////////////////////////////////////////////////////////////////
   // Step 2: If we pass the dependency check in step 1 then we can insert
   // the terms.
   ////////////////////////////////////////////////////////////////////////////
@@ -163,8 +185,12 @@ function tripal_owl_check_class_depedencies($stanza, &$deps) {
 
   // Insert a DB record if it doesn't already exist.
   if (!array_key_exists($db_name, $deps)) {
-    $deps[$db_name];
-  }
+  	$deps[$db_name] = TRUE;
+
+    $deps['db'][] = $db_name;
+    $deps['dbxref'][] = $db_name.':'.$accession;
+	}
+
   print_r($deps);
 }
 
