@@ -38,12 +38,6 @@ function tripal_cv_parse_owl($filename) {
   // vocabulary records.
   $ontology = new OWLStanza ( $owl );
 
-  // Insert the database record into Chado using the owl:Ontology stanza.
-  $about = $ontology->getAttribute ( 'rdf:about' );
-  if (preg_match ( '/^.*\/(.*)\.owl.*$/', $about, $matches )) {
-    $db_name = strtoupper ( $matches [1] );
-  }
-
   // //////////////////////////////////////////////////////////////////////////
   // Step 1: Make sure that all dependencies are met
   // //////////////////////////////////////////////////////////////////////////
@@ -69,6 +63,11 @@ function tripal_cv_parse_owl($filename) {
     exit;
   }
 
+  // Insert the database record into Chado using the owl:Ontology stanza.
+  $about = $ontology->getAttribute ( 'rdf:about' );
+  if (preg_match ( '/^.*\/(.*)\.owl.*$/', $about, $matches )) {
+    $db_name = strtoupper ( $matches [1] );
+  }
 
   $homepage = $ontology->getChild ( 'foaf:homepage' );
   $db = array (
@@ -165,16 +164,16 @@ function tripal_owl_check_class_depedencies($stanza, &$deps) {
   // Check if the db_name does not exists in the chado.db table.
   if (!$db) {
     $db = chado_select_record ('db', array(
-    $deps ['db'] => $db_name));
+    $deps['db'] => $db_name));
   }
 
   // If the db_name does exist then check if the accession exists in the
   // chado.dbxref table.
   if (!$dbxref) {
-    $dbxref = chado_select_record ('db_id', $values = array(
+    $dbxref = chado_select_record ('db_id', array(
       'db_id' => $db->db_id,
       'accession' => $accession,
-      $deps ['dbxref'] [] = $db_name . ':' . $accession,
+      $deps['dbxref'][] = $db_name . ':' . $accession,
   ));
   }
 
