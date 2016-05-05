@@ -60,7 +60,7 @@ function tripal_cv_parse_owl($filename) {
   print_r($deps);
   if (count($deps) > 0) {
     // We have unmet dependencies. Print those out and return.
-    print('Hello, We have missing dependencies. List DB’s first, then terms'."\n");
+    print('Hello, We have missing dependencies. List DB’s first, then terms' . "\n");
     exit();
   }
 
@@ -163,21 +163,24 @@ function tripal_owl_check_class_depedencies($stanza, &$deps) {
   }
 
   // Check if the db_name does not exists in the chado.db table.
-  $db = chado_select_record('db', array('db_id'), array('name' => $db_name));
+  $db = chado_select_record('db', array ('db_id'), array ('name' => $db_name));
 
   // Insert a DB record if it doesn't already exist.
   if ($db == FALSE) {
   }
-    else {
-      "An empty array if no records were matched". $deps['db'][$db_name] = TRUE;
-    //$deps['dbxref'][$db_name . ':' . $accession] = TRUE;
+  else {
+    "An empty array if no records were matched" . $deps['db'][$db_name] = TRUE;
+    // $deps['dbxref'][$db_name . ':' . $accession] = TRUE;
   }
 
+  // If the db_name does exist then check if the accession exists in the chado.dbxref table.
+  $dbxref = chado_select_record('dbxref', array('accession' => $accession), array('db_id' => $db->db_id));
 
-
-  // If the db_name does exist then check if the accession exists in the
-  // chado.dbxref table.
-  // if (!$dbxref) {
+  if ($dbxref == FALSE) {
+  }
+  else {
+    $deps['dbxref'][$db_name . ':' . $accession] = TRUE;
+  }
   // $dbxref = chado_select_record ('db_id', array(
   // 'db_id' => $db->db_id,
   // 'accession' => $accession,
