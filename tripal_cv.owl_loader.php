@@ -167,26 +167,13 @@ function tripal_owl_check_class_depedencies($stanza, &$deps) {
 
   // Insert a DB record if it doesn't already exist.
   if ($db == FALSE) {
+    throw new Exception("Can't determine db");
   }
-  else {
-    "An empty array if no records were matched" . $deps['db'][$db_name] = TRUE;
-    // $deps['dbxref'][$db_name . ':' . $accession] = TRUE;
+  else if (count($db) == 0) {
+    $deps['db'][$db_name] = TRUE;
   }
 
-  // If the db_name does exist then check if the accession exists in the chado.dbxref table.
-  $dbxref = chado_select_record('dbxref', array('accession' => $accession), array('db_id' => $db->db_id));
 
-  if ($dbxref == FALSE) {
-  }
-  else {
-    $deps['dbxref'][$db_name . ':' . $accession] = TRUE;
-  }
-  // $dbxref = chado_select_record ('db_id', array(
-  // 'db_id' => $db->db_id,
-  // 'accession' => $accession,
-  // $deps['dbxref'][] = $db_name . ':' . $accession,
-  // ));
-  // }
 }
 
 /**
