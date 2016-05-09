@@ -169,9 +169,15 @@ function tripal_owl_check_class_depedencies($stanza, &$deps) {
   if ($db == FALSE) {
     throw new Exception("Can't determine db");
   }
-  else if (count($db) == 0) {
-    $deps['db'][$db_name] = TRUE;
+  else {
+    if (count($db) == 0) {
+      $deps['db'][$db_name] = TRUE;
+    }
   }
+
+  //
+
+
 
 
 }
