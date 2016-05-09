@@ -152,7 +152,7 @@ function tripal_owl_check_class_depedencies($stanza, &$deps) {
 
   // Get the DB name and accession from the about attribute.
   $about = $stanza->getAttribute('rdf:about');
-  // print_r($about);
+
   if (preg_match('/.*\/(.+)_(.+)/', $about, $matches)) {
     $db_name = strtoupper($matches[1]);
     $accession = $matches[2];
@@ -166,17 +166,24 @@ function tripal_owl_check_class_depedencies($stanza, &$deps) {
   $db = chado_select_record('db', array ('db_id'), array ('name' => $db_name));
 
   // Insert a DB record if it doesn't already exist.
-  if ($db == FALSE) {
+  if ($db === FALSE) {
     throw new Exception("Can't determine db");
   }
-  else {
-    if (count($db) == 0) {
+  else if (count($db) == 0) {
       $deps['db'][$db_name] = TRUE;
     }
-  }
 
-  //
+  //If the db_name does exist then check if the accession exists in the chado.dbxref table. If it doesn’t add an entry
+  $dbxref = chado_select_record('dbxref', array ('dbxref_id'), array ('db_id','accession' => $accession));
 
+  print ($dbxref);
+
+//  if ($dbxref === FALSE) {
+//    throw new Exception("Can't determine accession with db_name");
+//  }
+//  elseif (count($accession)) {
+//    $deps['dbxref'][$db_name.'.'.$accesson] = TRUE;
+//  }
 
 
 
