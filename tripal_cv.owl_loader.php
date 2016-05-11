@@ -175,7 +175,7 @@ function tripal_owl_check_class_depedencies($stanza, &$deps) {
 //   $db = chado_insert_record('db', array ($deps));
 
   //If the db_name does exist then check if the accession exists in the chado.dbxref table. If it doesn’t add an entry
-  $dbxref = chado_select_record('dbxref', array ('dbxref_id','db_id'), $values = array('name' => $db_name,'accession' => $accession));
+  $dbxref = chado_select_record('dbxref', array ('dbxref_id','db_id'), $values = array('db_id' => $db,'accession' => $accession));
   print_r ($dbxref);
 
 //  if ($dbxref === FALSE) {
