@@ -117,7 +117,7 @@ function tripal_cv_parse_owl($filename) {
         // tripal_owl_handle_object_property($stanza);
         break;
       case 'owl:Class':
-        tripal_owl_handle_class($stanza, $vocabs);
+        // tripal_owl_handle_class($stanza, $vocabs);
         break;
       case 'owl:Axiom':
         break;
@@ -173,17 +173,18 @@ function tripal_owl_check_class_depedencies($stanza, &$deps) {
       $deps['db'][$db_name] = TRUE;
     }
 
+  //$db = tripal_insert_db($deps);
+
   //If the db_name does exist then check if the accession exists in the chado.dbxref table. If it doesn’t add an entry
-  $dbxref = chado_select_record('dbxref', array ('dbxref_id'), array ('db_id','accession' => $accession));
+  $dbxref = chado_select_record('dbxref', array ('dbxref_id'), $values = array ('db_id' => $db->db_id, 'accession' => $accession));
+  print_r ($dbxref);
 
-  print ($dbxref);
-
-//  if ($dbxref === FALSE) {
-//    throw new Exception("Can't determine accession with db_name");
-//  }
-//  elseif (count($accession)) {
-//    $deps['dbxref'][$db_name.'.'.$accesson] = TRUE;
-//  }
+ if ($dbxref === FALSE) {
+   throw new Exception("Can't determine accession with db_name");
+ }
+ elseif (count($accession) == 0) {
+   $deps['dbxref'][$db_name .':'. $accesson] = TRUE;
+ }
 
 
 
