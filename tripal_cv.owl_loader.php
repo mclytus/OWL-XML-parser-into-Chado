@@ -163,29 +163,29 @@ function tripal_owl_check_class_depedencies($stanza, &$deps) {
   }
 
   // Check if the db_name does not exists in the chado.db table.
-  $db = chado_select_record('db', array ('db_id'), array ('name' => $db_name));
+  $db = chado_select_record('db', array('db_id'), array ('name' => $db_name));
 
   // Insert a DB record if it doesn't already exist.
   if ($db === FALSE) {
     throw new Exception("Can't determine db");
   }
   else if (count($db) == 0) {
-      $deps['db'][$db_name] = TRUE;
-    }
-//   $db = chado_insert_record('db', array ($deps));
+    $deps['db'][$db_name] = TRUE;
+    return;
+  }
 
   //If the db_name does exist then check if the accession exists in the chado.dbxref table. If it doesn’t add an entry
-  $dbxref = chado_select_record('dbxref', array ('dbxref_id','db_id'), $values = array('db_id' => $db,'accession' => $accession));
+  $values = array('db_id' => $db[0]->db_id, 'accession' => $accession);
+  print_r($values);
+  $dbxref = chado_select_record('dbxref', array ('dbxref_id','db_id'), $values);
   print_r ($dbxref);
 
-//  if ($dbxref === FALSE) {
-//    throw new Exception("Can't determine accession with db_name");
-//  }
-//  elseif (count($accession) == 0) {
-//    $deps['dbxref'][$db_name .':'. $accesson] = TRUE;
-//  }
-
-
+ if ($dbxref === FALSE) {
+   throw new Exception("Can't determine accession with db_name");
+ }
+ elseif (count($accession) == 0) {
+   $deps['dbxref'][$db_name .':'. $accesson] = TRUE;
+ }
 
 }
 
