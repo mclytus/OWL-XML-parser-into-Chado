@@ -216,34 +216,38 @@ function tripal_owl_check_class_depedencies(OWLStanza $stanza, $vocab_db_name, &
 
 /**
  *
- * @param
- *          $owl
+ * @param $stanza
+ * @param $vocabs
+ * @throws Exception
  */
 function tripal_owl_handle_object_property($stanza) {
 }
 
 /**
  *
- * @param
- *          $owl
+ * @param $stanza
+ * @param $vocabs
+ * @throws Exception
  */
 function tripal_owl_handle_annotation_property($stanza) {
 }
 
 /**
  *
- * @param
- *          $owl
+ * @param $stanza
+ * @param $vocabs
+ * @throws Exception
  */
 function tripal_owl_handle_description($stanza) {
 }
 
 /**
  *
- * @param
- *          $owl
+ * @param $stanza
+ * @param $vocabs
+ * @throws Exception
  */
-function tripal_owl_handle_class($stanza, $vocabs) {
+function tripal_owl_handle_class(OWLStanza $stanza, $vocabs) {
 
   // Initialize the database and cv variables.
   $db_name = '';
@@ -256,77 +260,35 @@ function tripal_owl_handle_class($stanza, $vocabs) {
   if (preg_match('/.*\/(.+)_(.+)/', $about, $matches)) {
     $db_name = strtoupper($matches[1]);
     $accession = $matches[2];
-  }
-  else {
-    throw new Exception("owl:Class stanza is missing the 'rdf:about' attribute. " . "This is necessary to determine the term's accession: \n\n" . $stanza->getXML());
-  }
-
-  // Insert a DB record if it doesn't already exist.
-  if (array_key_exists($db_name, $vocabs)) {
     $db = $vocabs[$db_name]['db'];
     $cv = $vocabs[$db_name]['cv'];
   }
   else {
-    // Unfortunately, all we have is the name. The OWL format
-    // doesn't provides us the URL, description, etc.
-    $values = array (
-      'name' => $db_name
-    );
-    $db = tripal_insert_db($values);
-
-    // Check to see if this database has records and if so, what CV it is using.
-    // Because the OWL Class doensn't specify a name that Chado wants for the
-    // cv table, we have to discover it or add it. If we find a single record
-    // that has a cvterm (hence associated with a CV) then we'll reuse the same
-    // CV. Otherwise, we must add a new CV record and we'll use the $db_name
-    // as the name.
-    $sql = "
-  SELECT CV.*
-  FROM {cvterm} CVT
-  INNER JOIN {dbxref} DBX ON DBX.dbxref_id = CVT.dbxref_id
-  INNER JOIN {db} DB ON DB.db_id = DBX.db_id
-  INNER JOIN {cv} CV ON CVT.cv_id = CV.cv_id
-  WHERE DB.db_id = :db_id
-  LIMIT 1 OFFSET 0
-  ";
-    $results = chado_query($sql, array (
-      ':db_id' => $db->db_id
-    ));
-    $cv = $results->fetchObject();
-    // If there are no terms using this database then we need to add the
-    // vocabulary.
-    if (!$cv) {
-      $cv = tripal_insert_cv($db->name, '');
-    }
-
-    // Add our new DB and CV to the vocab array.
-    $vocabs[$db_name]['cv'] = $cv;
-    $vocabs[$db_name]['db'] = $db;
-
-    if ($db_name == $vocabs['this']) {
-
-      // Insert a dbxref record.
-      $values = array (
-        'db_id' => $db->db_id,
-        'accession' => $accession
-      );
-      $dbxref = tripal_insert_dbxref($values);
-    }
-
-    // Insert a new cvterm record.
-    $cvterm_name = '';
-    $definition = '';
-
-    $term = array (
-      'id' => $db->name . ':' . $dbxref->accession,
-      'name' => $cvterm_name,
-      'cv_name' => $cv->name,
-      'definition' => $definition
-    );
-    $option = array ();
-    if ($vocabs['this'] != $db->name) {
-      $option['update_existing'] = FALSE;
-    }
-    $cvterm = tripal_insert_cvterm($term, $option);
+    throw new Exception("owl:Class stanza is missing the 'rdf:about' attribute. " .
+      "This is necessary to determine the term's accession: \n\n" . $stanza->getXML());
   }
+
+  // Insert a dbxref record.
+  if ($db_name == $vocabs['this']) {
+    $values = array (
+      'db_id' => $db->db_id,
+      'accession' => $accession
+    );
+    $dbxref = tripal_insert_dbxref($values);
+  }
+
+  // Insert a new cvterm record.
+  $cvterm_name = '';
+  $definition = '';
+  $term = array (
+    'id' => $db->name . ':' . $dbxref->accession,
+    'name' => $cvterm_name,
+    'cv_name' => $cv->name,
+    'definition' => $definition
+  );
+  $option = array();
+  if ($vocabs['this'] != $db->name) {
+    $option['update_existing'] = FALSE;
+  }
+  $cvterm = tripal_insert_cvterm($term, $option);
 }
