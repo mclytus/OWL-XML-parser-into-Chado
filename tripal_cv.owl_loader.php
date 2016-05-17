@@ -34,10 +34,6 @@ function tripal_cv_parse_owl($filename) {
   // the object from reading the entire file into memory.
   $rdf = new OWLStanza($owl, FALSE);
 
-  // Get the ontology stanza so we can add the database and controlled
-  // vocabulary records.
-  $ontology = new OWLStanza($owl);
-
   // //////////////////////////////////////////////////////////////////////////
   // Step 1: Make sure that all dependencies are met
   // //////////////////////////////////////////////////////////////////////////
@@ -61,8 +57,22 @@ function tripal_cv_parse_owl($filename) {
   if (count($deps) > 0) {
     // We have unmet dependencies. Print those out and return.
     print('Hello, We have missing dependencies. List DB’s first, then terms' . "\n");
-    exit();
+    return;
   }
+
+  // //////////////////////////////////////////////////////////////////////////
+  // Step 2: If we pass the dependency check in step 1 then we can insert
+  // the terms.
+  // //////////////////////////////////////////////////////////////////////////
+
+  // Reload the ontology to reposition at the beginning for inserting the
+  // new terms.
+  $owl = new XMLReader();
+  $rdf = new OWLStanza($owl, FALSE);
+
+  // Get the ontology stanza so we can add the database and controlled
+  // vocabulary records.
+  $ontology = new OWLStanza($owl);
 
   // Insert the database record into Chado using the owl:Ontology stanza.
   $about = $ontology->getAttribute('rdf:about');
@@ -89,16 +99,6 @@ function tripal_cv_parse_owl($filename) {
   $vocabs[$db_name]['db'] = $db;
   $vocabs['this'] = $db_name;
 
-  // //////////////////////////////////////////////////////////////////////////
-  // Step 2: If we pass the dependency check in step 1 then we can insert
-  // the terms.
-  // //////////////////////////////////////////////////////////////////////////
-
-  // Reload the ontology to reposition at the beginning for inserting the
-  // new terms.
-  $owl = new XMLReader();
-  $rdf = new OWLStanza($owl, FALSE);
-  $ontology = new OWLStanza($owl);
 
   // loop through each stanza, one at a time, and handle each one
   // based on the tag name.
@@ -178,7 +178,7 @@ function tripal_owl_check_class_depedencies($stanza, &$deps) {
   $values = array('db_id' => $db[0]->db_id, 'accession' => $accession);
   print_r($values);
   $dbxref = chado_select_record('dbxref', array ('dbxref_id','db_id'), $values);
-  print_r ($dbxref);
+  //print_r ($dbxref);
 
  if ($dbxref === FALSE) {
    throw new Exception("Can't determine accession with db_name");
