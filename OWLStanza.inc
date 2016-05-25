@@ -165,6 +165,7 @@ class OWLStanza {
         return $child;
       }
     }
+    return NULL;
   }
 
   /**

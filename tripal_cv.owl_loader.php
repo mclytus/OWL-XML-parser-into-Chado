@@ -65,41 +65,41 @@ function tripal_cv_parse_owl($filename) {
   }
   if (count(array_keys($deps)) > 0) {
     // We have unmet dependencies. Print those out and return.
-    print('Hello, We have missing dependencies. List DB’s first, then terms' . "\n");
-    print_r($deps);
+    // print('We have missing dependencies vocabularies (db_names) that are not in the Chado database.
+    // The deps array will have DB’s, then terms' . "\n");
+    // print_r($deps);
     return;
   }
 
+    //
+    // Step 2: If we pass the dependency check in step 1 then we can insert
+    // the terms.
+    //
 
-  //
-  // Step 2: If we pass the dependency check in step 1 then we can insert
-  // the terms.
-  //
+    // Reload the ontology to reposition at the beginning for inserting the
+    // new terms.
+    $owl = new XMLReader();
+    $rdf = new OWLStanza($owl, FALSE);
+    $ontology = new OWLStanza($owl);
 
-  // Reload the ontology to reposition at the beginning for inserting the
-  // new terms.
-  $owl = new XMLReader();
-  $rdf = new OWLStanza($owl, FALSE);
-  $ontology = new OWLStanza($owl);
+    $homepage = $ontology->getChild('foaf:homepage');
+    $db = array (
+      'url' => $homepage->getValue(),
+      'name' => $db_name
+    );
+    $db = tripal_insert_db($db);
 
-  $homepage = $ontology->getChild('foaf:homepage');
-  $db = array (
-    'url' => $homepage->getValue(),
-    'name' => $db_name
-  );
-  $db = tripal_insert_db($db);
+    // Insert the controlled vocabulary record into Chado using the
+    // owl:Ontology stanza.
+    $title = $ontology->getChild('dc:title');
+    $description = $ontology->getChild('dc:description');
+    $cv_name = preg_replace("/[^\w]/", "_", strtolower($title->getValue()));
+    $cv = tripal_insert_cv($cv_name, $description->getValue());
 
-  // Insert the controlled vocabulary record into Chado using the
-  // owl:Ontology stanza.
-  $title = $ontology->getChild('dc:title');
-  $description = $ontology->getChild('dc:description');
-  $cv_name = preg_replace("/[^\w]/", "_", strtolower($title->getValue()));
-  $cv = tripal_insert_cv($cv_name, $description->getValue());
-
-  // Add this CV and DB to our vocabs array so we can reuse it later.
-  $vocabs[$db_name]['cv'] = $cv;
-  $vocabs[$db_name]['db'] = $db;
-  $vocabs['this'] = $db_name;
+    // Add this CV and DB to our vocabs array so we can reuse it later.
+    $vocabs[$db_name]['cv'] = $cv;
+    $vocabs[$db_name]['db'] = $db;
+    $vocabs['this'] = $db_name;
 
 
   // loop through each stanza, one at a time, and handle each one
@@ -119,7 +119,7 @@ function tripal_cv_parse_owl($filename) {
         // tripal_owl_handle_object_property($stanza);
         break;
       case 'owl:Class':
-        // tripal_owl_handle_class($stanza, $vocabs);
+        tripal_owl_handle_class($stanza, $vocabs);
         break;
       case 'owl:Axiom':
         break;
@@ -144,18 +144,18 @@ function tripal_cv_parse_owl($filename) {
  *
  * Some vocabularies use terms from other ontologies. If this is happens
  * we need to ensure that the dependent vocabularies are present in the
- * database prior to loading this one.  This function adds to the $deps
+ * database prior to loading this one. This function adds to the $deps
  * array all of the database names and term accessions that are missing in
  * Chado.
  *
- * @param $stanza
- *   The OWLStanza object for the current stanza from the OWL file.
- * @param $vocab_db_name
- *   The name of the database for the vocabulary being loded.
- * @param $deps
- *   The dependencies array.  The missing databases are provided in array
- *   using a 'db' key, and missing terms are in a second array using a
- *   'dbxref' key.
+ * @param $stanza The
+ *          OWLStanza object for the current stanza from the OWL file.
+ * @param $vocab_db_name The
+ *          name of the database for the vocabulary being loded.
+ * @param $deps The
+ *          dependencies array. The missing databases are provided in array
+ *          using a 'db' key, and missing terms are in a second array using a
+ *          'dbxref' key.
  */
 function tripal_owl_check_class_depedencies(OWLStanza $stanza, $vocab_db_name, &$deps) {
 
@@ -181,10 +181,14 @@ function tripal_owl_check_class_depedencies(OWLStanza $stanza, $vocab_db_name, &
     return;
   }
 
-  // Check if the db_name does not exists in the chado.db table.  If it
-  // does not exist then add it to our $deps array.  If the query fails then
+  // Check if the db_name does not exists in the chado.db table. If it
+  // does not exist then add it to our $deps array. If the query fails then
   // throw an exception.
-  $db = chado_select_record('db', array('db_id'), array('name' => $db_name));
+  $db = chado_select_record('db', array (
+    'db_id'
+  ), array (
+    'name' => $db_name
+  ));
   if ($db === FALSE) {
     throw new Exception("Failed to execute query to find vocabulary in chado.db table\n\n" . $stanza->getXML());
   }
@@ -193,19 +197,28 @@ function tripal_owl_check_class_depedencies(OWLStanza $stanza, $vocab_db_name, &
     // Does this stanza provide the URL for the OWL file of this missing
     // dependency. If so then add it to our deps array.
     $imported_from = $stanza->getChild('obo:IAO_0000412');
+
+    if ($imported_from == NULL) {
+      return;
+    }
     $url = $imported_from->getAttribute('rdf:resource');
     if ($url) {
       $deps['db'][$db_name] = $url;
     }
-
     return;
   }
 
   // If the db_name exists, then check if the accession exists in
   // the chado.dbxref table. If it doesn't exist then add an entry to the
   // $deps array. If the query fails then throw an exception.
-  $values = array('db_id' => $db[0]->db_id, 'accession' => $accession);
-  $dbxref = chado_select_record('dbxref', array('dbxref_id', 'db_id'), $values);
+  $values = array (
+    'db_id' => $db[0]->db_id,
+    'accession' => $accession
+  );
+  $dbxref = chado_select_record('dbxref', array (
+    'dbxref_id',
+    'db_id'
+  ), $values);
   if ($dbxref === FALSE) {
     throw new Exception("Failed to execute query to find vocabulary term in chado.dbxref table\n\n" . $stanza->getXML());
   }
@@ -216,8 +229,10 @@ function tripal_owl_check_class_depedencies(OWLStanza $stanza, $vocab_db_name, &
 
 /**
  *
- * @param $stanza
- * @param $vocabs
+ * @param
+ *          $stanza
+ * @param
+ *          $vocabs
  * @throws Exception
  */
 function tripal_owl_handle_object_property($stanza) {
@@ -225,8 +240,10 @@ function tripal_owl_handle_object_property($stanza) {
 
 /**
  *
- * @param $stanza
- * @param $vocabs
+ * @param
+ *          $stanza
+ * @param
+ *          $vocabs
  * @throws Exception
  */
 function tripal_owl_handle_annotation_property($stanza) {
@@ -234,8 +251,10 @@ function tripal_owl_handle_annotation_property($stanza) {
 
 /**
  *
- * @param $stanza
- * @param $vocabs
+ * @param
+ *          $stanza
+ * @param
+ *          $vocabs
  * @throws Exception
  */
 function tripal_owl_handle_description($stanza) {
@@ -243,8 +262,10 @@ function tripal_owl_handle_description($stanza) {
 
 /**
  *
- * @param $stanza
- * @param $vocabs
+ * @param
+ *          $stanza
+ * @param
+ *          $vocabs
  * @throws Exception
  */
 function tripal_owl_handle_class(OWLStanza $stanza, $vocabs) {
@@ -264,8 +285,7 @@ function tripal_owl_handle_class(OWLStanza $stanza, $vocabs) {
     $cv = $vocabs[$db_name]['cv'];
   }
   else {
-    throw new Exception("owl:Class stanza is missing the 'rdf:about' attribute. " .
-      "This is necessary to determine the term's accession: \n\n" . $stanza->getXML());
+    throw new Exception("owl:Class stanza is missing the 'rdf:about' attribute. " . "This is necessary to determine the term's accession: \n\n" . $stanza->getXML());
   }
 
   // Insert a dbxref record.
@@ -278,15 +298,15 @@ function tripal_owl_handle_class(OWLStanza $stanza, $vocabs) {
   }
 
   // Insert a new cvterm record.
-  $cvterm_name = '';
-  $definition = '';
+  $cvterm_name = 'rdfs:label';
+  $definition = 'obo:IAO_0000115';
   $term = array (
     'id' => $db->name . ':' . $dbxref->accession,
     'name' => $cvterm_name,
     'cv_name' => $cv->name,
     'definition' => $definition
   );
-  $option = array();
+  $option = array ();
   if ($vocabs['this'] != $db->name) {
     $option['update_existing'] = FALSE;
   }
