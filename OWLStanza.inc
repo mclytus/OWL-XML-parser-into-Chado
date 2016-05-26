@@ -9,7 +9,7 @@ class OWLStanza {
   // A boolean (TRUE or FALSE) indicating if children should be parsed.
   private $parse_children = TRUE;
   // The XML element tag name (e.g. ‘owl:ObjectProperty’,
-  // ‘owl:AnnotationProperty’).
+  // ‘owl:AnnotationProperty’, 'owl:Ontology').
   private $tag_name = '';
   // A key/value associative array of all of the attributes.
   private $attributes = array ();
@@ -172,7 +172,7 @@ class OWLStanza {
    * Gets the tag name.
    *
    * @return An XML element tag name (e.g. ‘owl:ObjectProperty’,
-   *         'owl:AnnotationProperty’).
+   *         'owl:AnnotationProperty’, 'owl:Ontology').
    */
   public function getTagName() {
     return $this->tag_name;

@@ -19,10 +19,6 @@ function tripal_cv_parse_owl($filename) {
 
   // TODO: this all should occur inside of a transaction.
 
-  // Holds an array of CV and DB records that have already been
-  // inserted (reduces number of queires).
-  $vocabs = array ();
-
   // Open the OWL file for parsing.
   $owl = new XMLReader();
   if (!$owl->open($filename)) {
@@ -71,36 +67,45 @@ function tripal_cv_parse_owl($filename) {
     return;
   }
 
-    //
-    // Step 2: If we pass the dependency check in step 1 then we can insert
-    // the terms.
-    //
 
-    // Reload the ontology to reposition at the beginning for inserting the
-    // new terms.
-    $owl = new XMLReader();
-    $rdf = new OWLStanza($owl, FALSE);
-    $ontology = new OWLStanza($owl);
+  //
+  // Step 2: If we pass the dependency check in step 1 then we can insert
+  // the terms.
+  //
 
-    $homepage = $ontology->getChild('foaf:homepage');
-    $db = array (
-      'url' => $homepage->getValue(),
-      'name' => $db_name
-    );
-    $db = tripal_insert_db($db);
+  // Holds an array of CV and DB records that have already been
+  // inserted (reduces number of queires).
+  $vocabs = array ();
 
-    // Insert the controlled vocabulary record into Chado using the
-    // owl:Ontology stanza.
-    $title = $ontology->getChild('dc:title');
-    $description = $ontology->getChild('dc:description');
-    $cv_name = preg_replace("/[^\w]/", "_", strtolower($title->getValue()));
-    $cv = tripal_insert_cv($cv_name, $description->getValue());
+  // Reload the ontology to reposition at the beginning for inserting the
+  // new terms.
 
-    // Add this CV and DB to our vocabs array so we can reuse it later.
-    $vocabs[$db_name]['cv'] = $cv;
-    $vocabs[$db_name]['db'] = $db;
-    $vocabs['this'] = $db_name;
+  $owl = new XMLReader();
+  $rdf = new OWLStanza($owl, FALSE);
+  $ontology = new OWLStanza($owl);
 
+
+  // Insert the database record into Chado using the
+  // owl:Ontology stanza.
+  $homepage = $ontology->getChild('foaf:homepage');
+
+  $db = array (
+    'url' => $homepage->getValue(),
+    'name' => $db_name
+  );
+  $db = tripal_insert_db($db);
+
+  // Insert the controlled vocabulary record into Chado using the
+  // owl:Ontology stanza.
+  $title = $ontology->getChild('dc:title');
+  $description = $ontology->getChild('dc:description');
+  $cv_name = preg_replace("/[^\w]/", "_", strtolower($title->getValue()));
+  $cv = tripal_insert_cv($cv_name, $description->getValue());
+
+  // Add this CV and DB to our vocabs array so we can reuse it later.
+  $vocabs[$db_name]['cv'] = $cv;
+  $vocabs[$db_name]['db'] = $db;
+  $vocabs['this'] = $db_name;
 
   // loop through each stanza, one at a time, and handle each one
   // based on the tag name.
@@ -199,7 +204,7 @@ function tripal_owl_check_class_depedencies(OWLStanza $stanza, $vocab_db_name, &
     $imported_from = $stanza->getChild('obo:IAO_0000412');
 
     if ($imported_from == NULL) {
-      return;
+    return;
     }
     $url = $imported_from->getAttribute('rdf:resource');
     if ($url) {
@@ -215,17 +220,17 @@ function tripal_owl_check_class_depedencies(OWLStanza $stanza, $vocab_db_name, &
     'db_id' => $db[0]->db_id,
     'accession' => $accession
   );
-  $dbxref = chado_select_record('dbxref', array (
-    'dbxref_id',
-    'db_id'
-  ), $values);
+
+  $dbxref = chado_select_record('dbxref', array ('dbxref_id','db_id'), $values);
   if ($dbxref === FALSE) {
     throw new Exception("Failed to execute query to find vocabulary term in chado.dbxref table\n\n" . $stanza->getXML());
   }
   elseif (count($accession) == 0) {
     $deps['dbxref'][$db_name . ':' . $accesson] = TRUE;
   }
+  return;
 }
+
 
 /**
  *
@@ -262,10 +267,13 @@ function tripal_owl_handle_description($stanza) {
 
 /**
  *
- * @param
- *          $stanza
+ * The function goes through owl:Class stanza to insert new vocabularies.
+ *
+ * @param $stanza The
+ *          OWLStanza object for the current stanza from the OWL file.
  * @param
  *          $vocabs
+ *
  * @throws Exception
  */
 function tripal_owl_handle_class(OWLStanza $stanza, $vocabs) {
@@ -298,8 +306,8 @@ function tripal_owl_handle_class(OWLStanza $stanza, $vocabs) {
   }
 
   // Insert a new cvterm record.
-  $cvterm_name = 'rdfs:label';
-  $definition = 'obo:IAO_0000115';
+  $cvterm_name = $stanza->getChild('rdfs:label');
+  $definition = $stanza->getChild('obo:IAO_0000115');
   $term = array (
     'id' => $db->name . ':' . $dbxref->accession,
     'name' => $cvterm_name,
