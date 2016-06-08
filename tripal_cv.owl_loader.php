@@ -169,20 +169,24 @@ function tripal_owl_check_class_depedencies(OWLStanza $stanza, $vocab_db_name, &
 
   // Get the DB name and accession from the "about" attribute.
   $about = $stanza->getAttribute('rdf:about');
+  if (!$about) {
+    // TODO: some owl:Class stanzas do not have an about.  What are these?
+    // how should we handle them.
+    return;
+  }
   if (preg_match('/.*\/(.+)_(.+)/', $about, $matches)) {
     $db_name = strtoupper($matches[1]);
     $accession = $matches[2];
   }
   else {
-    throw new Exception("owl:Class stanza is missing the
-     'rdf:about' attribute. " . "This is necessary to determine the term's accession: \n\n" . $stanza->getXML());
+    throw new Exception("owl:Class stanza 'rdf:about' attribute is not formated as expected: '$about'. " . "This is necessary to determine the term's accession: \n\n" . $stanza->getXML());
   }
 
   // If the database name for this term is the same as the vocabulary
   // we are trying to load, then don't include it in the $deps array.
   if ($db_name == $vocab_db_name) {
-    return;
-  }
+     return;
+    }
 
   // Check if the db_name does not exists in the chado.db table. If it
   // does not exist then add it to our $deps array. If the query fails then
