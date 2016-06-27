@@ -331,9 +331,8 @@ function tripal_owl_handle_class(OWLStanza $stanza, $vocabs) {
   $db_name = '';
   $accession = '';
   $is_a = '';
-  $db = null;
   $cv = $vocabs[$db_name]['cv'];
-  
+  $db = $vocabs[$db_name]['db'];
 
   // Get the DB name and accession from the about attribute.
   $about = $stanza->getAttribute('rdf:about');
@@ -345,24 +344,21 @@ function tripal_owl_handle_class(OWLStanza $stanza, $vocabs) {
   else {
     throw new Exception("owl:Class stanza 'rdf:about' attribute is not formated as expected: '$about'. " . "This is necessary to determine the term's accession: \n\n" . $stanza->getXML());
   }
-  
-  $db = $vocabs[$db_name]['db'];
+ 
   $db = $stanza->getChild();
-  if ($db) {
-    $db = $stanza->getValue();
-  }
-  $db = array (
+  if ($db = $vocabs[$db_name]['db']) {
+    $db = array (
     'db' => $db,
     'name' => $db_name
   );
-
-  // Using the Tripal API function to insert the term into the Chado database.
+}
+// Using the Tripal API function to insert the term into the Chado database.
   $db = tripal_insert_db($db);
  
   // Insert a dbxref record.
   if ($db_name == $vocabs['this']) {
     $values = array (
-      'db_id' => $db->db_id,
+      'db_id' => $db_name[0]->db_id,
       'accession' => $accession
     );
 
@@ -387,6 +383,7 @@ function tripal_owl_handle_class(OWLStanza $stanza, $vocabs) {
   // $cvterm = tripal_insert_cvterm($term, $option);
 
   // Add a record to the chado relationship table if an ‘rdfs:subClassOf’ child exists.
+  
   $cvterm_name = $stanza->getChild('rdfs:label');
   if ($cvterm_name) {
     $cvterm_name = $stanza->getValue();
