@@ -332,20 +332,33 @@ function tripal_owl_handle_class(OWLStanza $stanza, $vocabs) {
   $accession = '';
   $is_a = '';
   $db = null;
-  $cv = null;
+  $cv = $vocabs[$db_name]['cv'];
+  
 
   // Get the DB name and accession from the about attribute.
   $about = $stanza->getAttribute('rdf:about');
   if (preg_match('/.*\/(.+)_(.+)/', $about, $matches)) {
     $db_name = strtoupper($matches[1]);
     $accession = $matches[2];
-    $db = $vocabs[$db_name]['db'];
-    $cv = $vocabs[$db_name]['cv'];
   }
+  
   else {
-    throw new Exception("owl:Class stanza is missing the 'rdf:about' attribute. " . "This is necessary to determine the term's accession: \n\n" . $stanza->getXML());
+    throw new Exception("owl:Class stanza 'rdf:about' attribute is not formated as expected: '$about'. " . "This is necessary to determine the term's accession: \n\n" . $stanza->getXML());
   }
+  
+  $db = $vocabs[$db_name]['db'];
+  $db = $stanza->getChild();
+  if ($db) {
+    $db = $stanza->getValue();
+  }
+  $db = array (
+    'db' => $db,
+    'name' => $db_name
+  );
 
+  // Using the Tripal API function to insert the term into the Chado database.
+  $db = tripal_insert_db($db);
+ 
   // Insert a dbxref record.
   if ($db_name == $vocabs['this']) {
     $values = array (
@@ -358,31 +371,40 @@ function tripal_owl_handle_class(OWLStanza $stanza, $vocabs) {
   }
 
   // Insert a new cvterm record.
-  $cvterm_name = '';
-  $definition = '';
+  // $cvterm_name = '';
+  // $definition = '';
+  
+  // $term = array (
+  //   'id' => $db->name . ':' . $dbxref->accession,
+  //   'name' => $cvterm_name,
+  //   'cv_name' => $cv->name,
+  //   'definition' => $definition
+  // );
+  // $option = array ();
+  // if ($vocabs['this'] != $db->name) {
+  //   $option['update_existing'] = FALSE;
+  // }
+  // $cvterm = tripal_insert_cvterm($term, $option);
+
+  // Add a record to the chado relationship table if an ‘rdfs:subClassOf’ child exists.
+  $cvterm_name = $stanza->getChild('rdfs:label');
+  if ($cvterm_name) {
+    $cvterm_name = $stanza->getValue();
+  }
+  
+  $definition = $stanza->getChild('obo:IAO_0000115');
+  if ($definition) {
+     $definition = $stanza->getValue();
+  }
+  
   $term = array (
-    'id' => $db->name . ':' . $dbxref->accession,
-    'name' => $cvterm_name,
-    'cv_name' => $cv->name,
-    'definition' => $definition
+  'id' => $db->name . ':' . $dbxref->accession,
+  'name' => $cvterm_name,
+  'cv_name' => $cv->name,
+  'definition' => $definition
   );
   $option = array ();
   if ($vocabs['this'] != $db->name) {
     $option['update_existing'] = FALSE;
   }
-  $cvterm = tripal_insert_cvterm($term, $option);
-
-  // Add a record to the chado relationship table if an ‘rdfs:subClassOf’ child exists.
-  // $cvterm_name = $stanza->getChild('rdfs:label');
-  // $definition = $stanza->getChild('obo:IAO_0000115');
-  // $term = array (
-  // 'id' => $db->name . ':' . $dbxref->accession,
-  // 'name' => $cvterm_name,
-  // 'cv_name' => $cv->name,
-  // 'definition' => $definition
-  // );
-  // $option = array ();
-  // if ($vocabs['this'] != $db->name) {
-  // $option['update_existing'] = FALSE;
-  // }
 }
