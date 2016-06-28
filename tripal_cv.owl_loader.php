@@ -340,12 +340,26 @@ function tripal_owl_handle_class(OWLStanza $stanza, $vocabs) {
     $db_name = strtoupper($matches[1]);
     $accession = $matches[2];
   }
-  
+
   else {
     throw new Exception("owl:Class stanza 'rdf:about' attribute is not formated as expected: '$about'. " . "This is necessary to determine the term's accession: \n\n" . $stanza->getXML());
   }
- 
-  $db = $stanza->getChild();
+
+  $imported_from_2 = $stanza->getChild('obo:InOwl:id');
+
+  if ($imported_from_2 == NULL) {
+    return;
+  }
+  $db = $imported_from_2->getAttribute('rdf:datatype');
+  if ($db) {
+    $db_name = $db->getValue();
+  }
+  else {
+    if (preg_match('\/(.*)(<.*?)', $about, $matches)) {
+      $db_name = strtoupper($matches[1]);
+    }
+  }
+
   if ($db = $vocabs[$db_name]['db']) {
     $db = array (
     'db' => $db,
@@ -354,7 +368,7 @@ function tripal_owl_handle_class(OWLStanza $stanza, $vocabs) {
 }
 // Using the Tripal API function to insert the term into the Chado database.
   $db = tripal_insert_db($db);
- 
+
   // Insert a dbxref record.
   if ($db_name == $vocabs['this']) {
     $values = array (
@@ -369,7 +383,7 @@ function tripal_owl_handle_class(OWLStanza $stanza, $vocabs) {
   // Insert a new cvterm record.
   // $cvterm_name = '';
   // $definition = '';
-  
+
   // $term = array (
   //   'id' => $db->name . ':' . $dbxref->accession,
   //   'name' => $cvterm_name,
@@ -383,17 +397,17 @@ function tripal_owl_handle_class(OWLStanza $stanza, $vocabs) {
   // $cvterm = tripal_insert_cvterm($term, $option);
 
   // Add a record to the chado relationship table if an ‘rdfs:subClassOf’ child exists.
-  
+
   $cvterm_name = $stanza->getChild('rdfs:label');
   if ($cvterm_name) {
     $cvterm_name = $stanza->getValue();
   }
-  
+
   $definition = $stanza->getChild('obo:IAO_0000115');
   if ($definition) {
      $definition = $stanza->getValue();
   }
-  
+
   $term = array (
   'id' => $db->name . ':' . $dbxref->accession,
   'name' => $cvterm_name,
@@ -404,4 +418,5 @@ function tripal_owl_handle_class(OWLStanza $stanza, $vocabs) {
   if ($vocabs['this'] != $db->name) {
     $option['update_existing'] = FALSE;
   }
+  $cvterm = tripal_insert_cvterm($term, $option);
 }
