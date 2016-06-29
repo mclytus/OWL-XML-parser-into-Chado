@@ -1,6 +1,6 @@
 <?php
 
-// This Tripal_cv.owl_loader.php  and OWLStanza.inc(CLASS) file is being developed to read and parse through any scientific
+// This Tripal_cv.owl_loader.php and OWLStanza.inc(CLASS) file is being developed to read and parse through any scientific
 // ontology XML Owl file to have the vocabularies be inserted into the Chado database for the open source project
 // Tripal.info to be used.
 
@@ -20,7 +20,9 @@ require_once ('OWLStanza.inc');
  * @throws Exception
  */
 function tripal_cv_parse_owl($filename) {
-
+  // TODO: need to pass in the $db_name as the cv name into the function when you see the
+  // oboInOwl:default-namespace that is not the same as $db_name.
+  //
   // TODO: this all should occur inside of a transaction.
 
   // Opening the OWL file for parsing.
@@ -64,9 +66,9 @@ function tripal_cv_parse_owl($filename) {
   $stanza = new OWLStanza($owl);
 
   // Set an empty array for the dependencies to go in.
-  $deps = array(
-    'db' => array(),
-    'dbxref' => array(),
+  $deps = array (
+    'db' => array (),
+    'dbxref' => array ()
   );
 
   // Start looping and parsing through the owl:Class stanza section of the Owl file.
@@ -86,12 +88,10 @@ function tripal_cv_parse_owl($filename) {
     // print('We have missing dependencies vocabularies (db_names) that are not in the Chado database.
     // The deps array will have DB’s, then terms' . "\n");
     if (count($deps['db']) > 0) {
-      drupal_set_message('Cannot import ontology, "' . $db_name . '", as the following ' .
-          'dependent vocabularies must first be imported: ' . print_r(array_keys($deps['db']), TRUE) . '\n', 'error');
+      drupal_set_message('Cannot import ontology, "' . $db_name . '", as the following ' . 'dependent vocabularies must first be imported: ' . print_r(array_keys($deps['db']), TRUE) . '\n', 'error');
     }
     if (count($deps['dbxref']) > 0) {
-      drupal_set_message('Cannot import ontology, "' . $db_name . '", as the following ' .
-          'dependent terms must first be imported: ' . print_r(array_keys($deps['dbxref']), TRUE) . '\n', 'error');
+      drupal_set_message('Cannot import ontology, "' . $db_name . '", as the following ' . 'dependent terms must first be imported: ' . print_r(array_keys($deps['dbxref']), TRUE) . '\n', 'error');
     }
     return;
   }
@@ -140,7 +140,7 @@ function tripal_cv_parse_owl($filename) {
     $cv_description = $description->getValue();
   }
 
-  // Get the name for the CV. This should be in the 'dc:title' element.  If the
+  // Get the name for the CV. This should be in the 'dc:title' element. If the
   // title is not present then the cv name should default to the database name.
   $cv_name = $db_name;
   $title = $ontology->getChild('dc:title');
@@ -152,7 +152,7 @@ function tripal_cv_parse_owl($filename) {
   $cv = tripal_insert_cv($cv_name, $cv_description);
 
   // Add this CV and DB to our vocabs array so we can reuse it later.
-  $vocabs[$db_name]['cv'] = $cv;
+  $vocabs[$db_name]['cv'] = $default_namespace_cv;
   $vocabs[$db_name]['db'] = $db;
   $vocabs['this'] = $db_name;
 
@@ -245,7 +245,11 @@ function tripal_owl_check_class_depedencies(OWLStanza $stanza, $vocab_db_name, &
   // Check if the db_name does not exist in the chado.db table. If it
   // does not exist then add it to our $deps array. If the query fails then
   // throw an exception.
-  $db = chado_select_record('db', array ('db_id'), array ('name' => $db_name));
+  $db = chado_select_record('db', array (
+    'db_id'
+  ), array (
+    'name' => $db_name
+  ));
   if ($db === FALSE) {
     throw new Exception("Failed to execute query to find vocabulary in chado.db table\n\n" . $stanza->getXML());
   }
@@ -269,9 +273,15 @@ function tripal_owl_check_class_depedencies(OWLStanza $stanza, $vocab_db_name, &
   // If the db_name exists, then check if the accession exists in
   // the chado.dbxref table. If it doesn't exist then add an entry to the
   // $deps array. If the query fails then throw an exception.
-  $values = array ('db_id' => $db[0]->db_id,'accession' => $accession);
+  $values = array (
+    'db_id' => $db[0]->db_id,
+    'accession' => $accession
+  );
 
-  $dbxref = chado_select_record('dbxref', array ('dbxref_id', 'db_id'), $values);
+  $dbxref = chado_select_record('dbxref', array (
+    'dbxref_id',
+    'db_id'
+  ), $values);
   if ($dbxref === FALSE) {
     throw new Exception("Failed to execute query to find vocabulary term in chado.dbxref table\n\n" . $stanza->getXML());
   }
@@ -331,7 +341,7 @@ function tripal_owl_handle_class(OWLStanza $stanza, $vocabs) {
   $db_name = '';
   $accession = '';
   $is_a = '';
-  $cv = $vocabs[$db_name]['cv'];
+  $default_namespace_cv = $vocabs[$db_name]['cv'];
   $db = $vocabs[$db_name]['db'];
 
   // Get the DB name and accession from the about attribute.
@@ -340,83 +350,78 @@ function tripal_owl_handle_class(OWLStanza $stanza, $vocabs) {
     $db_name = strtoupper($matches[1]);
     $accession = $matches[2];
   }
-
   else {
     throw new Exception("owl:Class stanza 'rdf:about' attribute is not formated as expected: '$about'. " . "This is necessary to determine the term's accession: \n\n" . $stanza->getXML());
   }
 
-  $imported_from_2 = $stanza->getChild('obo:InOwl:id');
-
-  if ($imported_from_2 == NULL) {
+  if ($db_name !== $vocabs['this']) {
     return;
   }
-  $db = $imported_from_2->getAttribute('rdf:datatype');
-  if ($db) {
-    $db_name = $db->getValue();
-  }
-  else {
-    if (preg_match('\/(.*)(<.*?)', $about, $matches)) {
+
+  // Any oboInOwl:id supercedes what we find in the rdf:about
+  $obo_id = $stanza->getChild('oboInOwl:id');
+
+  if ($obo_id) {
+    if (preg_match('/.*>(.+):(.+)<.*/', $about, $matches)) {
       $db_name = strtoupper($matches[1]);
+      $accession = $matches[2];
+    }
+    else {
+      throw new Exception("owl:Class stanza 'rdf:about' attribute is not formated as expected: '$about'. " . "This is necessary to determine the term's accession: \n\n" . $stanza->getXML());
     }
   }
 
-  if ($db = $vocabs[$db_name]['db']) {
-    $db = array (
-    'db' => $db,
-    'name' => $db_name
+  // insert dbxref
+  $values = array (
+    'db_id' => $db->db_id,
+    'accession' => $accession
   );
-}
-// Using the Tripal API function to insert the term into the Chado database.
-  $db = tripal_insert_db($db);
+  print_r($values.'\n');
+  $dbxref = tripal_insert_dbxref($values);
 
-  // Insert a dbxref record.
-  if ($db_name == $vocabs['this']) {
-    $values = array (
-      'db_id' => $db_name[0]->db_id,
-      'accession' => $accession
-    );
+//   if ($dbxref === FALSE) {
+//     throw new Exception("Failed to execute query to find vocabulary term in chado.dbxref table\n\n" . $stanza->getXML());
+//   }
 
-  // Using the Tripal API function to insert values in the dbxref table.
-    $dbxref = tripal_insert_dbxref($values);
-  }
+  // $cvterm_name = $stanza->getChild('rdfs:label');
+  // if ($cvterm_name) {
+  // $cvterm_name = $stanza->getValue();
+  // }
+
+  // $definition = $stanza->getChild('obo:IAO_0000115');
+  // if ($definition) {
+  // $definition = $stanza->getValue();
+  // }
+
+  // $term = array (
+  // 'id' => $db->name . ':' . $dbxref->accession,
+  // 'name' => $cvterm_name,
+  // 'cv_name' => $cv->name,
+  // 'definition' => $definition
+  // );
+  // $option = array ();
+  // if ($vocabs['this'] != $db->name) {
+  // $option['update_existing'] = FALSE;
+  // }
+  // $cvterm = tripal_insert_cvterm($term, $option);
+
+  // // Add a record to the chado relationship table if an ‘rdfs:subClassOf’ child exists.
+
+  // $cvterm_name = $stanza->getChild('rdfs:subClassOf');
 
   // Insert a new cvterm record.
   // $cvterm_name = '';
   // $definition = '';
 
   // $term = array (
-  //   'id' => $db->name . ':' . $dbxref->accession,
-  //   'name' => $cvterm_name,
-  //   'cv_name' => $cv->name,
-  //   'definition' => $definition
+  // 'id' => $db->name . ':' . $dbxref->accession,
+  // 'name' => $cvterm_name,
+  // 'cv_name' => $cv->name,
+  // 'definition' => $definition
   // );
   // $option = array ();
   // if ($vocabs['this'] != $db->name) {
-  //   $option['update_existing'] = FALSE;
+  // $option['update_existing'] = FALSE;
   // }
   // $cvterm = tripal_insert_cvterm($term, $option);
-
-  // Add a record to the chado relationship table if an ‘rdfs:subClassOf’ child exists.
-
-  $cvterm_name = $stanza->getChild('rdfs:label');
-  if ($cvterm_name) {
-    $cvterm_name = $stanza->getValue();
-  }
-
-  $definition = $stanza->getChild('obo:IAO_0000115');
-  if ($definition) {
-     $definition = $stanza->getValue();
-  }
-
-  $term = array (
-  'id' => $db->name . ':' . $dbxref->accession,
-  'name' => $cvterm_name,
-  'cv_name' => $cv->name,
-  'definition' => $definition
-  );
-  $option = array ();
-  if ($vocabs['this'] != $db->name) {
-    $option['update_existing'] = FALSE;
-  }
-  $cvterm = tripal_insert_cvterm($term, $option);
 }
