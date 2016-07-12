@@ -367,7 +367,7 @@ function tripal_owl_handle_class(OWLStanza $stanza, $vocabs) {
       $accession = $matches[2];
     }
     else {
-      throw new Exception("owl:Class stanza 'rdf:about' attribute is not formated as expected: '$about'. " . "This is necessary to determine the term's accession: \n\n" . $stanza->getXML());
+      throw new Exception("owl:Class stanza 'rdf:about' attribute is not same as oboInOwl:id: '$obo_id'. " . "This is necessary to determine the term's accession: \n\n" . $stanza->getXML());
     }
   }
 
@@ -379,31 +379,29 @@ function tripal_owl_handle_class(OWLStanza $stanza, $vocabs) {
   print_r($values.'\n');
   $dbxref = tripal_insert_dbxref($values);
 
-//   if ($dbxref === FALSE) {
-//     throw new Exception("Failed to execute query to find vocabulary term in chado.dbxref table\n\n" . $stanza->getXML());
-//   }
 
-  // $cvterm_name = $stanza->getChild('rdfs:label');
-  // if ($cvterm_name) {
-  // $cvterm_name = $stanza->getValue();
-  // }
+  $cvterm_name = $stanza->getChild('rdfs:label');
+   if ($cvterm_name) {
+    $cvterm_name = $stanza->getValue();
+ }
 
-  // $definition = $stanza->getChild('obo:IAO_0000115');
-  // if ($definition) {
-  // $definition = $stanza->getValue();
-  // }
+  $definition = $stanza->getChild('obo:IAO_0000115');
+   if ($definition) {
+    $definition = $stanza->getValue();
+ }
 
-  // $term = array (
-  // 'id' => $db->name . ':' . $dbxref->accession,
-  // 'name' => $cvterm_name,
-  // 'cv_name' => $cv->name,
-  // 'definition' => $definition
-  // );
-  // $option = array ();
-  // if ($vocabs['this'] != $db->name) {
-  // $option['update_existing'] = FALSE;
-  // }
-  // $cvterm = tripal_insert_cvterm($term, $option);
+  $term = array (
+   'id' => $db->name . ':' . $dbxref->accession,
+   'name' => $cvterm_name,
+   'cv_name' => $cv->name,
+   'definition' => $definition
+  );
+  
+  $option = array ();
+   if ($vocabs['this'] != $db->name) {
+    $option['update_existing'] = FALSE;
+}
+  $cvterm = tripal_insert_cvterm($term, $option);
 
   // // Add a record to the chado relationship table if an ‘rdfs:subClassOf’ child exists.
 
