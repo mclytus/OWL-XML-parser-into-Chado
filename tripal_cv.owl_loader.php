@@ -145,10 +145,13 @@ function tripal_cv_parse_owl($filename) {
 
   // Get the name for the CV. This should be in the 'dc:title' element. If the
   // title is not present then the cv name should default to the database name.
-  $cv_name = $namespace;
-  if ($cv_name) {
-    $cv_name = $vocabs[$db_name]['cv'];
+  $cv_name = '';
+  $namespace = $ontology->getChild('oboInOwl:default-namespace');
+  if ($namespace) {
+    $cv_name = $namespace->getValue();
   }
+  print_r($cv_name);
+
   $title = $ontology->getChild('dc:title');
   if ($title) {
     $cv_name = preg_replace("/[^\w]/", "_", strtolower($title->getValue()));
@@ -318,75 +321,75 @@ function tripal_owl_handle_object_property($stanza, $vocabs) {
  */
 function tripal_owl_handle_annotation_property($stanza, $vocabs) {
 
-$matches = array();
-$db_name = '';
-$accession = '';  
-$about = $stanza->getAttribute('rdf:about'); 
-// Get the DB name and accession from the about attribute using the preg match function.
-  if (preg_match('/.*\/(.+)_(.+)/', $about, $matches)) {
-    $db_name = ($matches[1]);
-    $accession = $matches[2];
-  }
-  else {
-        throw new Exception("owl:Class stanza 'rdf:about' attribute is not formated as expected: '$about'. " . "This is necessary to determine the term's accession: \n\n" . $stanza->getXML());
-      }
-  
-  // Insert a DB Record
-if (array_key_exists($db_name, $vocabs)) {
-    $db = $vocabs[$db_name]['db'];
-    $default_namespace_cv = $vocabs[$db_name]['cv'];
-  }
-  else {
-    // Unfortunately, all we have is the name. The OWL format
-    // doesn't provides us the URL, description, etc.
-    $values = array(
-      'name' => $db_name
-    );
-    $db = tripal_insert_db($values);
-// Insert a dbxref record.
-  $values = array(
-    'db_id' => $db->db_id,
-    'accession' => $accession
-  );
-  $dbxref = tripal_insert_dbxref($values);
-  
-  $imported_from = $stanza->getChild('obo:IAO_0000114');
-    if ($imported_from == NULL) {
-      return;
-    }
-    $url = $imported_from->getAttribute('rdf:resource');
-    if ($url) {
-      $vocabs['db'][$db_name] = $url;
-    }
-    return;
-  }
+// $matches = array();
+// $db_name = '';
+// $accession = '';
+// $about = $stanza->getAttribute('rdf:about');
+// // Get the DB name and accession from the about attribute using the preg match function.
+//   if (preg_match('/.*\/(.+)_(.+)/', $about, $matches)) {
+//     $db_name = ($matches[1]);
+//     $accession = $matches[2];
+//   }
+//   else {
+//         throw new Exception("owl:Class stanza 'rdf:about' attribute is not formated as expected: '$about'. " . "This is necessary to determine the term's accession: \n\n" . $stanza->getXML());
+//       }
 
-// Insert a new cvterm record.
-$cvterm_name = '';
-$definition = '';
+//   // Insert a DB Record
+// if (array_key_exists($db_name, $vocabs)) {
+//     $db = $vocabs[$db_name]['db'];
+//     $default_namespace_cv = $vocabs[$db_name]['cv'];
+//   }
+//   else {
+//     // Unfortunately, all we have is the name. The OWL format
+//     // doesn't provides us the URL, description, etc.
+//     $values = array(
+//       'name' => $db_name
+//     );
+//     $db = tripal_insert_db($values);
+// // Insert a dbxref record.
+//   $values = array(
+//     'db_id' => $db->db_id,
+//     'accession' => $accession
+//   );
+//   $dbxref = tripal_insert_dbxref($values);
 
-$cvterm_name = $stanza->getChild('rdfs:label');
-  if ($cvterm_name) {
-  $cvterm_name = $stanza->getValue();
-  }
-  $definition = $stanza->getChild('obo:IAO_0000115');
-  if ($definition) {
-  $definition = $stanza->getValue();
-  }
+//   $imported_from = $stanza->getChild('obo:IAO_0000114');
+//     if ($imported_from == NULL) {
+//       return;
+//     }
+//     $url = $imported_from->getAttribute('rdf:resource');
+//     if ($url) {
+//       $vocabs['db'][$db_name] = $url;
+//     }
+//     return;
+//   }
 
-  $term = array(
-  	'id' => $db->name .':'. $dbxref->accession,
-  	'name' => $cvterm_name,
-  	'cv_name' => $cv->name,
-  	'definition' => $definition,
-  );
-  $option =array();
-  if ($vocabs['this'] != $db->name){
-  	$option['update_existing'] = FALSE;
-  }
-  $cvterm = tripal_insert_cvterm($term, $option);
+// // Insert a new cvterm record.
+// $cvterm_name = '';
+// $definition = '';
+
+// $cvterm_name = $stanza->getChild('rdfs:label');
+//   if ($cvterm_name) {
+//   $cvterm_name = $stanza->getValue();
+//   }
+//   $definition = $stanza->getChild('obo:IAO_0000115');
+//   if ($definition) {
+//   $definition = $stanza->getValue();
+//   }
+
+//   $term = array(
+//   	'id' => $db->name .':'. $dbxref->accession,
+//   	'name' => $cvterm_name,
+//   	'cv_name' => $cv->name,
+//   	'definition' => $definition,
+//   );
+//   $option =array();
+//   if ($vocabs['this'] != $db->name){
+//   	$option['update_existing'] = FALSE;
+//   }
+//   $cvterm = tripal_insert_cvterm($term, $option);
+// }
 }
-
 /**
  *
  * @param
@@ -471,6 +474,7 @@ function tripal_owl_handle_class(OWLStanza $stanza, $vocabs) {
   'cv_name' => $cv->name,
   'definition' => $definition
   );
+  print_r($term);
 
   $options = array ();
   if ($vocabs['this'] != $db->name) {
@@ -507,4 +511,4 @@ function tripal_owl_handle_class(OWLStanza $stanza, $vocabs) {
   // $option['update_existing'] = FALSE;
   // }
   // $cvterm = tripal_insert_cvterm($term, $option);
-}
+  }
