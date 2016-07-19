@@ -170,13 +170,13 @@ function tripal_cv_parse_owl($filename) {
     // Use the tag name to identify which function should be called.
     switch ($stanza->getTagName()) {
       case 'owl:AnnotationProperty':
-        // tripal_owl_handle_annotation_property($stanza);
+        // tripal_owl_handle_annotation_property($stanza, $vocabs);
         break;
       case 'rdf:Description':
-        // tripal_owl_handle_description($stanza);
+        // tripal_owl_handle_description($stanza, $vocabs);
         break;
       case 'owl:ObjectProperty':
-        // tripal_owl_handle_object_property($stanza);
+        // tripal_owl_handle_object_property($stanza, $vocabs);
         break;
       case 'owl:Class':
         tripal_owl_handle_class($stanza, $vocabs);
@@ -305,7 +305,7 @@ function tripal_owl_check_class_depedencies(OWLStanza $stanza, $vocab_db_name, &
  *          $vocabs
  * @throws Exception
  */
-function tripal_owl_handle_object_property($stanza) {
+function tripal_owl_handle_object_property($stanza, $vocabs) {
 }
 
 /**
@@ -316,7 +316,75 @@ function tripal_owl_handle_object_property($stanza) {
  *          $vocabs
  * @throws Exception
  */
-function tripal_owl_handle_annotation_property($stanza) {
+function tripal_owl_handle_annotation_property($stanza, $vocabs) {
+
+$matches = array();
+$db_name = '';
+$accession = '';  
+$about = $stanza->getAttribute('rdf:about'); 
+// Get the DB name and accession from the about attribute using the preg match function.
+  if (preg_match('/.*\/(.+)_(.+)/', $about, $matches)) {
+    $db_name = ($matches[1]);
+    $accession = $matches[2];
+  }
+  else {
+        throw new Exception("owl:Class stanza 'rdf:about' attribute is not formated as expected: '$about'. " . "This is necessary to determine the term's accession: \n\n" . $stanza->getXML());
+      }
+  
+  // Insert a DB Record
+if (array_key_exists($db_name, $vocabs)) {
+    $db = $vocabs[$db_name]['db'];
+    $default_namespace_cv = $vocabs[$db_name]['cv'];
+  }
+  else {
+    // Unfortunately, all we have is the name. The OWL format
+    // doesn't provides us the URL, description, etc.
+    $values = array(
+      'name' => $db_name
+    );
+    $db = tripal_insert_db($values);
+// Insert a dbxref record.
+  $values = array(
+    'db_id' => $db->db_id,
+    'accession' => $accession
+  );
+  $dbxref = tripal_insert_dbxref($values);
+  
+  $imported_from = $stanza->getChild('obo:IAO_0000114');
+    if ($imported_from == NULL) {
+      return;
+    }
+    $url = $imported_from->getAttribute('rdf:resource');
+    if ($url) {
+      $vocabs['db'][$db_name] = $url;
+    }
+    return;
+  }
+
+// Insert a new cvterm record.
+$cvterm_name = '';
+$definition = '';
+
+$cvterm_name = $stanza->getChild('rdfs:label');
+  if ($cvterm_name) {
+  $cvterm_name = $stanza->getValue();
+  }
+  $definition = $stanza->getChild('obo:IAO_0000115');
+  if ($definition) {
+  $definition = $stanza->getValue();
+  }
+
+  $term = array(
+  	'id' => $db->name .':'. $dbxref->accession,
+  	'name' => $cvterm_name,
+  	'cv_name' => $cv->name,
+  	'definition' => $definition,
+  );
+  $option =array();
+  if ($vocabs['this'] != $db->name){
+  	$option['update_existing'] = FALSE;
+  }
+  $cvterm = tripal_insert_cvterm($term, $option);
 }
 
 /**
@@ -327,7 +395,7 @@ function tripal_owl_handle_annotation_property($stanza) {
  *          $vocabs
  * @throws Exception
  */
-function tripal_owl_handle_description($stanza) {
+function tripal_owl_handle_description($stanza, $vocabs) {
 }
 
 /**
@@ -417,6 +485,16 @@ function tripal_owl_handle_class(OWLStanza $stanza, $vocabs) {
   // Insert a new cvterm record.
   // $cvterm_name = '';
   // $definition = '';
+  // $cvterm_name = $stanza->getChild('rdfs:label');
+  // if ($cvterm_name) {
+  // $cvterm_name = $stanza->getValue();
+  //}
+
+  // $definition = $stanza->getChild('obo:IAO_0000115');
+  // if ($definition) {
+  //$definition = $stanza->getValue();
+  //}
+
 
   // $term = array (
   // 'id' => $db->name . ':' . $dbxref->accession,
