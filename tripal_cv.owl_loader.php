@@ -145,9 +145,9 @@ function tripal_cv_parse_owl($filename) {
 
   // Get the name for the CV. This should be in the 'dc:title' element. If the
   // title is not present then the cv name should default to the database name.
-  $cv_name = '';
+  $cv_name = $namespace;
   if ($cv_name) {
-    $db_name = $vocabs['this'];
+    $cv_name = $vocabs[$db_name]['cv'];
   }
   $title = $ontology->getChild('dc:title');
   if ($title) {
