@@ -470,8 +470,8 @@ function tripal_owl_handle_class(OWLStanza $stanza, $vocabs) {
   $term = array (
   'id' => $db->name . ':' . $dbxref->accession,
   'name' => $db->name,
-  'cv_name' => $cvterm_name = $stanza->getValue(),
-  'definition' => $definition = $stanza->getValue(),
+  'cv_name' => $stanza->getValue(),
+  'definition' =>  $stanza->getValue(),
   );
   print_r($term);
 
