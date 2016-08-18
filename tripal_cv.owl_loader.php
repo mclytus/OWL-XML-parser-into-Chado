@@ -145,23 +145,21 @@ function tripal_cv_parse_owl($filename) {
 
   // Get the name for the CV. This should be in the 'dc:title' element. If the
   // title is not present then the cv name should default to the database name.
-  $cv_name = '';
-  $namespace = $ontology->getChild('oboInOwl:default-namespace');
+  $cv_name == $namespace = $ontology->getChild('oboInOwl:default-namespace');
   if ($namespace) {
     $cv_name = $namespace->getValue();
   }
-  print_r($cv_name);
 
   $title = $ontology->getChild('dc:title');
   if ($title) {
     $cv_name = preg_replace("/[^\w]/", "_", strtolower($title->getValue()));
   }
 
-  // Insert the CV recrod into Chado.
+  // Insert the CV record into Chado.
   $cv = tripal_insert_cv($cv_name, $cv_description);
 
   // Add this CV and DB to our vocabs array so we can reuse it later.
-  $vocabs[$db_name]['cv'] = $default_namespace_cv;
+  $vocabs[$db_name]['cv'] = $namespace_cv;
   $vocabs[$db_name]['db'] = $db;
   $vocabs['this'] = $db_name;
 
@@ -418,7 +416,7 @@ function tripal_owl_handle_class(OWLStanza $stanza, $vocabs) {
   $db_name = $vocabs['this'];
   $accession = '';
   $is_a = '';
-  $default_namespace_cv = $vocabs[$db_name]['cv'];
+  $namespace_cv = $vocabs[$db_name]['cv'];
   $db = $vocabs[$db_name]['db'];
 
   // Insert the dbxref record into Chado using the owl:Class stanza of the owl file.
@@ -455,13 +453,14 @@ function tripal_owl_handle_class(OWLStanza $stanza, $vocabs) {
     'db_id' => $db->db_id,
     'accession' => $accession
   );
-  //print_r($values);
+  print_r($values);
   $dbxref = tripal_insert_dbxref($values);
 
   $cvterm_name = $stanza->getChild('rdfs:label');
   if ($cvterm_name) {
   $cvterm_name = $stanza->getValue();
   }
+  print_r($cvterm_name);
 
   $definition = $stanza->getChild('obo:IAO_0000115');
   if ($definition) {
@@ -470,9 +469,9 @@ function tripal_owl_handle_class(OWLStanza $stanza, $vocabs) {
 
   $term = array (
   'id' => $db->name . ':' . $dbxref->accession,
-  'name' => $cvterm_name,
-  'cv_name' => $cv->name,
-  'definition' => $definition
+  'name' => $db->name,
+  'cv_name' => $cvterm_name = $stanza->getValue(),
+  'definition' => $definition = $stanza->getValue(),
   );
   print_r($term);
 
